@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>APEX — Lamborghini × McLaren</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;600&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --void: #060606;
+      --lambo: #F2C12E;
+      --mclaren: #FF6B1A;
+      --silver: #8A8A98;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--void);
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* ── Ambient page background ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: -1;
+      background:
+        radial-gradient(ellipse 65% 90% at 8% 25%,  rgba(242,193,46,0.045) 0%, transparent 55%),
+        radial-gradient(ellipse 65% 90% at 92% 75%, rgba(255,107,26,0.045) 0%, transparent 55%),
+        #060606;
+    }
+
+    /* ── Cursor ── */
+    .dot {
+      position: fixed; width: 6px; height: 6px;
+      background: #fff; border-radius: 50%;
+      pointer-events: none; z-index: 9999;
+      transform: translate(-50%,-50%);
+      mix-blend-mode: difference;
+    }
+    .ring {
+      position: fixed; width: 38px; height: 38px;
+      border: 1px solid rgba(255,255,255,0.45);
+      border-radius: 50%; pointer-events: none;
+      z-index: 9998; transform: translate(-50%,-50%);
+    }
+
+    /* ── Intro ── */
+    #intro {
+      position: fixed; inset: 0; z-index: 200;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: var(--void);
+    }
+    #intro-word {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(88px, 16vw, 220px);
+      letter-spacing: 0.14em; line-height: 1; overflow: hidden;
+    }
+    #intro-word span { display: block; transform: translateY(110%); }
+    #intro-sub {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 10px; letter-spacing: 0.45em;
+      color: var(--silver); opacity: 0;
+      text-transform: uppercase; margin-top: 22px;
+    }
+
+    /* ── Nav ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      padding: 28px 52px;
+      display: flex; justify-content: space-between; align-items: center;
+      z-index: 100; mix-blend-mode: difference;
+    }
+    .nav-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px; letter-spacing: 0.25em;
+      color: #fff; text-decoration: none;
+    }
+    .nav-list { list-style: none; display: flex; gap: 36px; }
+    .nav-list a {
+      font-family: 'Roboto Mono', monospace; font-size: 9px;
+      letter-spacing: 0.3em; color: rgba(255,255,255,0.45);
+      text-decoration: none; text-transform: uppercase;
+      transition: color 0.25s;
+    }
+    .nav-list a:hover { color: #fff; }
+
+    /* ── Gallery ── */
+    #gallery { opacity: 0; }
+
+    /* ── Slides ── */
+    .slide {
+      position: relative; width: 100vw; height: 100vh;
+      display: flex; align-items: flex-end; overflow: hidden;
+    }
+    .slide canvas {
+      position: absolute; top: 0; left: 0; display: block;
+    }
+
+    /* brand color glow overlay per slide */
+    .slide-glow {
+      position: absolute; inset: 0; z-index: 2;
+      pointer-events: none;
+    }
+    .glow-lambo {
+      background:
+        radial-gradient(ellipse 55% 60% at 18% 72%, rgba(242,193,46,0.18) 0%, transparent 60%),
+        linear-gradient(to top, rgba(6,6,6,0.35) 0%, transparent 25%);
+    }
+    .glow-lambo-2 {
+      background:
+        radial-gradient(ellipse 55% 60% at 82% 72%, rgba(148,52,244,0.14) 0%, transparent 60%),
+        linear-gradient(to top, rgba(6,6,6,0.35) 0%, transparent 25%);
+    }
+    .glow-mclaren {
+      background:
+        radial-gradient(ellipse 55% 60% at 75% 72%, rgba(255,107,26,0.18) 0%, transparent 60%),
+        linear-gradient(to top, rgba(6,6,6,0.35) 0%, transparent 25%);
+    }
+    .glow-mclaren-2 {
+      background:
+        radial-gradient(ellipse 55% 60% at 50% 68%, rgba(196,255,0,0.12) 0%, transparent 60%),
+        linear-gradient(to top, rgba(6,6,6,0.35) 0%, transparent 25%);
+    }
+
+    /* bottom text gradient */
+    .slide::after {
+      content: ''; position: absolute; z-index: 5;
+      bottom: 0; left: 0; right: 0; height: 60%;
+      background: linear-gradient(to top, rgba(6,6,6,0.97) 0%, rgba(6,6,6,0.45) 40%, transparent 100%);
+      pointer-events: none;
+    }
+    .slide-content {
+      position: relative; z-index: 10;
+      padding: 0 52px 58px; width: 100%;
+      display: flex; justify-content: space-between; align-items: flex-end;
+    }
+    .slide-eye {
+      font-family: 'Roboto Mono', monospace; font-size: 9px;
+      letter-spacing: 0.45em; text-transform: uppercase; margin-bottom: 10px;
+    }
+    .eye-lambo  { color: var(--lambo); }
+    .eye-mclaren { color: var(--mclaren); }
+    .slide-model {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(58px, 9.5vw, 132px);
+      line-height: 0.87;
+    }
+    .stat-num {
+      display: block; font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(40px, 6vw, 82px); line-height: 1;
+    }
+    .stat-lbl {
+      display: block; font-family: 'Roboto Mono', monospace;
+      font-size: 8px; letter-spacing: 0.3em;
+      color: var(--silver); text-transform: uppercase; margin-top: 6px;
+    }
+
+    /* ── Rivalry ── */
+    .rivalry {
+      position: relative; width: 100vw; height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; background: var(--void);
+    }
+    /* vertical light seam */
+    .rivalry::before {
+      content: ''; position: absolute;
+      top: -5%; left: 50%; width: 1px; height: 110%;
+      background: linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.07) 40%, rgba(255,255,255,0.07) 60%, transparent 100%);
+      transform: translateX(-50%);
+    }
+    .rivalry-halves {
+      position: absolute; inset: 0; display: flex;
+    }
+    .rh-l {
+      flex: 1;
+      background: radial-gradient(ellipse at 80% 50%, rgba(242,193,46,0.08) 0%, transparent 70%);
+    }
+    .rh-r {
+      flex: 1;
+      background: radial-gradient(ellipse at 20% 50%, rgba(255,107,26,0.08) 0%, transparent 70%);
+    }
+    .rivalry-center { position: relative; z-index: 2; text-align: center; }
+    .rn {
+      display: block; font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(56px, 11vw, 158px);
+      line-height: 0.88; will-change: transform;
+    }
+    .rn-lambo   { color: var(--lambo); }
+    .rn-mclaren { color: var(--mclaren); }
+    .r-vs {
+      display: block; font-family: 'Roboto Mono', monospace;
+      font-size: clamp(10px, 1.2vw, 15px);
+      letter-spacing: 0.85em; color: var(--silver); padding: 20px 0;
+    }
+
+    /* ── Specs ── */
+    #specs {
+      padding: 108px 52px; max-width: 1400px; margin: 0 auto;
+      position: relative;
+    }
+    /* tech grid bg */
+    #specs::before {
+      content: ''; position: absolute; inset: 0; z-index: -1;
+      background:
+        linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px);
+      background-size: 56px 56px;
+    }
+    .specs-eye {
+      font-family: 'Roboto Mono', monospace; font-size: 9px;
+      letter-spacing: 0.5em; color: var(--silver);
+      text-transform: uppercase; margin-bottom: 56px;
+    }
+    .specs-grid { display: grid; grid-template-columns: 1fr 1fr; }
+    .specs-col { padding: 38px 40px; border: 1px solid rgba(255,255,255,0.05); }
+    .specs-col-h { font-family: 'Bebas Neue', sans-serif; font-size: 34px; margin-bottom: 28px; }
+    .specs-col-h.lambo   { color: var(--lambo); }
+    .specs-col-h.mclaren { color: var(--mclaren); }
+    .spec-row {
+      display: flex; justify-content: space-between; align-items: baseline;
+      padding: 13px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+      font-family: 'Roboto Mono', monospace; font-size: 11px;
+    }
+    .sk { color: var(--silver); letter-spacing: 0.06em; }
+    .sv { color: #fff; }
+
+    /* ── Manifesto ── */
+    .manifesto {
+      padding: 100px 52px; border-top: 1px solid rgba(255,255,255,0.05);
+      display: grid; grid-template-columns: 1fr 2fr; gap: 60px;
+      align-items: start; max-width: 1400px; margin: 0 auto;
+    }
+    .manifesto-label {
+      font-family: 'Roboto Mono', monospace; font-size: 9px;
+      letter-spacing: 0.45em; color: var(--silver);
+      text-transform: uppercase; padding-top: 6px;
+    }
+    .manifesto-body {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(32px, 4.5vw, 60px); line-height: 1.05;
+    }
+    .manifesto-body em     { font-style: normal; color: var(--lambo); }
+    .manifesto-body strong { font-weight: inherit; color: var(--mclaren); }
+
+    /* ── Footer ── */
+    footer {
+      padding: 44px 52px; border-top: 1px solid rgba(255,255,255,0.05);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .footer-logo { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 0.22em; }
+    .footer-copy { font-family: 'Roboto Mono', monospace; font-size: 9px; letter-spacing: 0.2em; color: var(--silver); }
+    .footer-credit { font-family: 'Roboto Mono', monospace; font-size: 8px; letter-spacing: 0.1em; color: rgba(138,138,152,0.45); text-align: right; }
+
+    /* ── Progress ── */
+    #progress {
+      position: fixed; bottom: 0; left: 0; height: 2px; width: 0;
+      background: linear-gradient(to right, var(--lambo), var(--mclaren));
+      z-index: 100;
+    }
+
+    /* ── Scroll hint ── */
+    #scrollHint {
+      position: fixed; bottom: 28px; left: 52px; z-index: 50;
+      display: flex; align-items: center; gap: 14px;
+      font-family: 'Roboto Mono', monospace; font-size: 9px;
+      letter-spacing: 0.3em; color: rgba(255,255,255,0.22);
+      text-transform: uppercase;
+    }
+    .sh-line {
+      width: 36px; height: 1px;
+      background: rgba(255,255,255,0.2);
+      position: relative; overflow: hidden;
+    }
+    .sh-line::after {
+      content: ''; position: absolute;
+      top: 0; left: -100%; width: 100%; height: 100%;
+      background: rgba(255,255,255,0.7);
+      animation: shAnim 2.2s ease-in-out infinite;
+    }
+    @keyframes shAnim { 0%{left:-100%} 50%{left:0%} 100%{left:100%} }
+
+    /* ── Counter ── */
+    #counter {
+      position: fixed; right: 36px; bottom: 52px; z-index: 50;
+      font-family: 'Roboto Mono', monospace; font-size: 9px;
+      letter-spacing: 0.2em; color: rgba(255,255,255,0.28);
+      writing-mode: vertical-rl;
+    }
+
+    @media (prefers-reduced-motion: reduce) { .sh-line::after { animation: none; } }
+    @media (max-width: 768px) {
+      nav { padding: 20px 24px; }
+      .nav-list { display: none; }
+      .slide-content { padding: 0 24px 40px; flex-direction: column; gap: 12px; align-items: flex-start; }
+      #specs { padding: 60px 24px; }
+      .specs-grid { grid-template-columns: 1fr; }
+      .manifesto { padding: 60px 24px; grid-template-columns: 1fr; gap: 20px; }
+      footer { padding: 32px 24px; flex-direction: column; gap: 10px; text-align: center; }
+      #scrollHint { left: 24px; }
+      #counter { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="dot" id="dot"></div>
+  <div class="ring" id="ring"></div>
+
+  <div id="intro">
+    <div id="intro-word"><span>APEX</span></div>
+    <p id="intro-sub">Lamborghini × McLaren — The Rivalry</p>
+  </div>
+
+  <div id="gallery">
+
+    <nav>
+      <a href="#" class="nav-logo">APEX</a>
+      <ul class="nav-list">
+        <li><a href="#lamborghini">Lamborghini</a></li>
+        <li><a href="#mclaren">McLaren</a></li>
+        <li><a href="#specs">Specs</a></li>
+      </ul>
+    </nav>
+
+    <section id="lamborghini">
+      <div class="slide">
+        <canvas id="c-huracan"></canvas>
+        <div class="slide-glow glow-lambo"></div>
+        <div class="slide-content">
+          <div>
+            <div class="slide-eye eye-lambo">Lamborghini</div>
+            <div class="slide-model">Huracán<br>STO</div>
+          </div>
+          <div>
+            <span class="stat-num">640</span>
+            <span class="stat-lbl">HP — 5.2L V10</span>
+          </div>
+        </div>
+      </div>
+      <div class="slide">
+        <canvas id="c-aventador"></canvas>
+        <div class="slide-glow glow-lambo-2"></div>
+        <div class="slide-content">
+          <div>
+            <div class="slide-eye eye-lambo">Lamborghini</div>
+            <div class="slide-model">Aventador<br>LP 700-4</div>
+          </div>
+          <div>
+            <span class="stat-num">2.9s</span>
+            <span class="stat-lbl">0–100 km/h</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="rivalry" id="rivalry">
+      <div class="rivalry-halves">
+        <div class="rh-l"></div>
+        <div class="rh-r"></div>
+      </div>
+      <div class="rivalry-center">
+        <span class="rn rn-lambo"   id="rn-l">LAMBORGHINI</span>
+        <span class="r-vs">— VS —</span>
+        <span class="rn rn-mclaren" id="rn-m">McLAREN</span>
+      </div>
+    </div>
+
+    <section id="mclaren">
+      <div class="slide">
+        <canvas id="c-720s"></canvas>
+        <div class="slide-glow glow-mclaren"></div>
+        <div class="slide-content">
+          <div>
+            <div class="slide-eye eye-mclaren">McLaren</div>
+            <div class="slide-model">720S<br>Coupé</div>
+          </div>
+          <div>
+            <span class="stat-num">341</span>
+            <span class="stat-lbl">km/h top speed</span>
+          </div>
+        </div>
+      </div>
+      <div class="slide">
+        <canvas id="c-senna"></canvas>
+        <div class="slide-glow glow-mclaren-2"></div>
+        <div class="slide-content">
+          <div>
+            <div class="slide-eye eye-mclaren">McLaren</div>
+            <div class="slide-model">Senna</div>
+          </div>
+          <div>
+            <span class="stat-num">800</span>
+            <span class="stat-lbl">HP — Road Legal</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="specs">
+      <div class="specs-eye">// Performance Comparison</div>
+      <div class="specs-grid">
+        <div class="specs-col">
+          <div class="specs-col-h lambo">Huracán STO</div>
+          <div class="spec-row"><span class="sk">Engine</span><span class="sv">5.2L V10 NA</span></div>
+          <div class="spec-row"><span class="sk">Power</span><span class="sv">640 HP</span></div>
+          <div class="spec-row"><span class="sk">Torque</span><span class="sv">565 Nm</span></div>
+          <div class="spec-row"><span class="sk">0–100 km/h</span><span class="sv">3.0 s</span></div>
+          <div class="spec-row"><span class="sk">Top Speed</span><span class="sv">310 km/h</span></div>
+          <div class="spec-row"><span class="sk">Weight</span><span class="sv">1,339 kg</span></div>
+          <div class="spec-row"><span class="sk">Drive</span><span class="sv">RWD</span></div>
+        </div>
+        <div class="specs-col">
+          <div class="specs-col-h mclaren">McLaren 720S</div>
+          <div class="spec-row"><span class="sk">Engine</span><span class="sv">4.0L V8 TT</span></div>
+          <div class="spec-row"><span class="sk">Power</span><span class="sv">720 HP</span></div>
+          <div class="spec-row"><span class="sk">Torque</span><span class="sv">770 Nm</span></div>
+          <div class="spec-row"><span class="sk">0–100 km/h</span><span class="sv">2.9 s</span></div>
+          <div class="spec-row"><span class="sk">Top Speed</span><span class="sv">341 km/h</span></div>
+          <div class="spec-row"><span class="sk">Weight</span><span class="sv">1,332 kg</span></div>
+          <div class="spec-row"><span class="sk">Drive</span><span class="sv">RWD</span></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="manifesto">
+      <div class="manifesto-label">// Philosophy</div>
+      <div class="manifesto-body">
+        <em>Italian fire.</em> British precision.<br>
+        Two schools of speed, two languages of<br>
+        <strong>pure mechanical violence.</strong>
+      </div>
+    </div>
+
+    <footer>
+      <div class="footer-logo">APEX</div>
+      <div>
+        <div class="footer-copy">© 2024 · Built for speed. Designed for rivals.</div>
+        <div class="footer-credit">Photos: Wikimedia Commons — CC-BY-SA 4.0</div>
+      </div>
+    </footer>
+
+  </div>
+
+  <div id="progress"></div>
+  <div id="scrollHint"><div class="sh-line"></div>scroll</div>
+  <div id="counter">01 / 04</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.2/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.2/dist/ScrollTrigger.min.js"></script>
+  <script>
+  'use strict';
+  gsap.registerPlugin(ScrollTrigger);
+
+  // ── Cursor ──────────────────────────────────────────────────
+  const dot  = document.getElementById('dot');
+  const ring = document.getElementById('ring');
+  let mx = 0, my = 0, rx = 0, ry = 0;
+  document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+  (function tick() {
+    rx += (mx - rx) * 0.12;
+    ry += (my - ry) * 0.12;
+    dot.style.cssText  = `left:${mx}px;top:${my}px`;
+    ring.style.cssText = `left:${rx}px;top:${ry}px`;
+    requestAnimationFrame(tick);
+  })();
+
+  // ── Intro ────────────────────────────────────────────────────
+  const introTL = gsap.timeline({ paused: true, onComplete: startGallery });
+  introTL
+    .to('#intro-word span', { y: '0%', duration: 1.1, ease: 'power4.out', delay: 0.15 })
+    .to('#intro-sub',       { opacity: 1, duration: 0.65, ease: 'power2.out' }, '-=0.35')
+    .to('#intro',           { opacity: 0, duration: 0.9, ease: 'power2.in', delay: 1.1 })
+    .set('#intro',          { display: 'none' });
+  document.fonts.ready.then(() => introTL.play());
+
+  function startGallery() {
+    gsap.to('#gallery', { opacity: 1, duration: 0.5 });
+    initDepthGallery();
+    initScrollFX();
+  }
+
+  // ── Shaders ──────────────────────────────────────────────────
+  const VS = `
+    varying vec2 vUv;
+    void main(){
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+    }`;
+
+  // Color-grading shader: darkens bright outdoor photos, adds brand tint + vignette
+  const FS = `
+    uniform sampler2D tImg;
+    uniform sampler2D tDep;
+    uniform float uMX;
+    uniform float uMY;
+    uniform float uAmp;
+    uniform vec3  uTint;
+    uniform float uBright;
+    varying vec2 vUv;
+    void main(){
+      // depth-driven displacement
+      float d = texture2D(tDep, vUv).r;
+      d = d * d;
+      vec2 shift = (vec2(uMX, uMY) - 0.5) * d * uAmp;
+      vec3 col = texture2D(tImg, vUv - shift).rgb;
+
+      // cinematic grade
+      col = pow(col, vec3(1.08));
+      col *= uBright;
+      col = mix(col, uTint * 0.14, 0.18);
+
+      // edge vignette
+      float v = length((vUv - 0.5) * vec2(1.3, 1.0));
+      col *= 1.0 - smoothstep(0.32, 0.8, v) * 0.65;
+
+      gl_FragColor = vec4(col, 1.0);
+    }`;
+
+  // ── Fallback canvas painter (shown while photo loads) ────────
+  function paintFallback(cfg) {
+    const W = 800, H = 500;
+    const c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#060606'; ctx.fillRect(0,0,W,H);
+
+    const ag = ctx.createRadialGradient(W*cfg.cx, H*cfg.cy, 10, W*cfg.cx, H*cfg.cy, W*0.55);
+    ag.addColorStop(0,    cfg.g1);
+    ag.addColorStop(0.45, cfg.g2);
+    ag.addColorStop(1,    'rgba(6,6,6,0)');
+    ctx.fillStyle = ag; ctx.fillRect(0,0,W,H);
+
+    // loading label
+    ctx.save();
+    ctx.globalAlpha = 0.2;
+    ctx.font = 'bold 80px Arial Black, sans-serif';
+    ctx.fillStyle = cfg.ac;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(cfg.wm, W*0.5, H*0.5);
+    ctx.restore();
+
+    // scan lines
+    ctx.save(); ctx.globalAlpha = 0.012;
+    for (let y = 0; y < H; y += 4) { ctx.fillStyle='#fff'; ctx.fillRect(0,y,W,1); }
+    ctx.restore();
+
+    const vg = ctx.createRadialGradient(W/2,H/2,H*0.1,W/2,H/2,W*0.8);
+    vg.addColorStop(0,'transparent'); vg.addColorStop(1,'rgba(0,0,0,0.8)');
+    ctx.fillStyle = vg; ctx.fillRect(0,0,W,H);
+    return c;
+  }
+
+  function makeDepthMap(cx, cy) {
+    const S = 512;
+    const c = document.createElement('canvas'); c.width = c.height = S;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#000'; ctx.fillRect(0,0,S,S);
+    const g = ctx.createRadialGradient(S*cx, S*cy, 0, S*cx, S*cy, S*0.6);
+    g.addColorStop(0,    '#fff');
+    g.addColorStop(0.3,  'rgba(210,210,210,0.9)');
+    g.addColorStop(0.65, 'rgba(80,80,80,0.4)');
+    g.addColorStop(1,    'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(0,0,S,S);
+    return c;
+  }
+
+  // ── Car configs ──────────────────────────────────────────────
+  // photoUrl: 1920px Wikimedia Commons thumbnails (CC-BY-SA 4.0)
+  // tint: normalised brand colour mixed into shadows
+  const CARS = [
+    {
+      id: 'c-huracan',
+      photoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/2021_Lamborghini_Huracan_STO_Red.jpg/1920px-2021_Lamborghini_Huracan_STO_Red.jpg',
+      cx: 0.5, cy: 0.55,
+      ac: '#F2C12E', tint: [0.949, 0.757, 0.18],
+      g1: 'rgba(242,193,46,0.35)', g2: 'rgba(190,95,0,0.18)',
+      wm: 'STO',
+    },
+    {
+      id: 'c-aventador',
+      photoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Lamborghini_Aventador_LP700-4_LB834.jpg/1920px-Lamborghini_Aventador_LP700-4_LB834.jpg',
+      cx: 0.5, cy: 0.58,
+      ac: '#9434F4', tint: [0.58, 0.2, 0.955],
+      g1: 'rgba(148,52,244,0.28)', g2: 'rgba(64,22,118,0.18)',
+      wm: 'LP700',
+    },
+    {
+      id: 'c-720s',
+      photoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Maclaren_720S_PA280972-PSD.jpg/1920px-Maclaren_720S_PA280972-PSD.jpg',
+      cx: 0.5, cy: 0.55,
+      ac: '#FF6B1A', tint: [1.0, 0.42, 0.1],
+      g1: 'rgba(255,107,26,0.35)', g2: 'rgba(205,48,0,0.2)',
+      wm: '720S',
+    },
+    {
+      id: 'c-senna',
+      photoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/McLaren_Senna_15.jpg/1920px-McLaren_Senna_15.jpg',
+      cx: 0.5, cy: 0.52,
+      ac: '#C4FF00', tint: [0.769, 1.0, 0.0],
+      g1: 'rgba(196,255,0,0.22)', g2: 'rgba(72,176,0,0.14)',
+      wm: 'SENNA',
+    },
+  ];
+
+  // ── Depth Gallery init ───────────────────────────────────────
+  function initDepthGallery() {
+    const loader = new THREE.TextureLoader();
+    loader.crossOrigin = 'anonymous';
+
+    CARS.forEach(cfg => {
+      const mountEl = document.getElementById(cfg.id);
+      if (!mountEl) return;
+      const slide = mountEl.parentElement;
+      const W = window.innerWidth, H = window.innerHeight;
+
+      const renderer = new THREE.WebGLRenderer({ canvas: mountEl, antialias: false });
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+      renderer.setSize(W, H);
+
+      const scene = new THREE.Scene();
+      const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
+      cam.position.z = 1;
+
+      const depTex = new THREE.CanvasTexture(makeDepthMap(cfg.cx, cfg.cy));
+
+      // Start with fast canvas fallback so slide looks good immediately
+      let fallbackTex = new THREE.CanvasTexture(paintFallback(cfg));
+
+      const mat = new THREE.ShaderMaterial({
+        uniforms: {
+          tImg:   { value: fallbackTex },
+          tDep:   { value: depTex },
+          uMX:    { value: 0.5 },
+          uMY:    { value: 0.5 },
+          uAmp:   { value: 0.034 },
+          uTint:  { value: new THREE.Vector3(...cfg.tint) },
+          uBright:{ value: 1.0 },
+        },
+        vertexShader: VS,
+        fragmentShader: FS,
+      });
+
+      scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat));
+
+      // Load real photo — swaps in when ready
+      loader.load(
+        cfg.photoUrl,
+        tex => {
+          mat.uniforms.tImg.value = tex;
+          mat.uniforms.uBright.value = 0.52;
+          mat.uniforms.uAmp.value = 0.02;
+          fallbackTex.dispose();
+          fallbackTex = null;
+        },
+        undefined,
+        () => {
+          // Photo failed — keep fallback, already showing
+        }
+      );
+
+      let tMX = 0.5, tMY = 0.5, cMX = 0.5, cMY = 0.5;
+      slide.addEventListener('mousemove', e => {
+        const r = slide.getBoundingClientRect();
+        tMX = (e.clientX - r.left) / r.width;
+        tMY = 1 - (e.clientY - r.top) / r.height;
+      });
+      slide.addEventListener('mouseleave', () => { tMX = 0.5; tMY = 0.5; });
+
+      ;(function render() {
+        cMX += (tMX - cMX) * 0.055;
+        cMY += (tMY - cMY) * 0.055;
+        mat.uniforms.uMX.value = cMX;
+        mat.uniforms.uMY.value = cMY;
+        renderer.render(scene, cam);
+        requestAnimationFrame(render);
+      })();
+
+      window.addEventListener('resize', () => {
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    });
+  }
+
+  // ── Scroll FX ────────────────────────────────────────────────
+  function initScrollFX() {
+    ScrollTrigger.create({
+      start: 'top top', end: 'bottom bottom',
+      onUpdate: s => {
+        document.getElementById('progress').style.width = (s.progress * 100) + '%';
+      }
+    });
+
+    ScrollTrigger.create({
+      trigger: '#gallery', start: '160px top',
+      onEnter:     () => gsap.to('#scrollHint', { opacity: 0, duration: 0.4 }),
+      onLeaveBack: () => gsap.to('#scrollHint', { opacity: 1, duration: 0.4 }),
+    });
+
+    // Rivalry names drift apart on scroll
+    gsap.timeline({
+      scrollTrigger: {
+        trigger: '.rivalry', start: 'top bottom',
+        end: 'bottom top', scrub: 0.9,
+      }
+    })
+    .to('#rn-l', { x: '-5vw', ease: 'none' }, 0)
+    .to('#rn-m', { x:  '5vw', ease: 'none' }, 0);
+
+    gsap.from('#rn-l', {
+      y: 44, opacity: 0, duration: 0.9, ease: 'power3.out',
+      scrollTrigger: { trigger: '.rivalry', start: 'top 68%' }
+    });
+    gsap.from('#rn-m', {
+      y: 44, opacity: 0, duration: 0.9, ease: 'power3.out', delay: 0.1,
+      scrollTrigger: { trigger: '.rivalry', start: 'top 68%' }
+    });
+
+    document.querySelectorAll('.slide-content').forEach(el => {
+      gsap.from(el, {
+        y: 32, opacity: 0, duration: 0.8, ease: 'power2.out',
+        scrollTrigger: { trigger: el.closest('.slide'), start: 'top 58%' }
+      });
+    });
+
+    gsap.from('.spec-row', {
+      x: -18, opacity: 0, stagger: 0.038, duration: 0.45, ease: 'power2.out',
+      scrollTrigger: { trigger: '#specs', start: 'top 72%' }
+    });
+
+    gsap.from('.manifesto-body', {
+      y: 24, opacity: 0, duration: 1, ease: 'power3.out',
+      scrollTrigger: { trigger: '.manifesto', start: 'top 70%' }
+    });
+
+    const slides = document.querySelectorAll('.slide');
+    slides.forEach((slide, i) => {
+      ScrollTrigger.create({
+        trigger: slide, start: 'top 50%', end: 'bottom 50%',
+        onEnter:     () => { document.getElementById('counter').textContent = `0${i+1} / 0${slides.length}`; },
+        onEnterBack: () => { document.getElementById('counter').textContent = `0${i+1} / 0${slides.length}`; },
+      });
+    });
+  }
+  </script>
+</body>
+<div id="cu29-age-gate" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:1rem"><div style="background:#012E32;border:1px solid rgba(200,121,58,.3);padding:2.5rem 2rem;max-width:420px;width:100%;text-align:center;box-shadow:0 32px 80px rgba(0,0,0,.6)"><div style="font-family:'Bebas Neue',cursive;font-size:2.2rem;background:linear-gradient(135deg,#F0C08A,#C8793A);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.2rem">InvestCu29</div><p style="font-size:.55rem;letter-spacing:.25em;text-transform:uppercase;color:#8BB5B0;margin-bottom:2rem">Age Verification</p><div id="cu29-age-q"><h2 style="font-family:'Bebas Neue',cursive;font-size:1.5rem;color:#EAE0D4;margin-bottom:.8rem">Are you 13 or older?</h2><p style="color:#8BB5B0;font-size:.78rem;line-height:1.7;margin-bottom:1.8rem">This site collects personal and financial data for investment purposes. You must be at least 13 years old to continue.</p><div style="display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap"><button onclick="cu29Yes()" style="padding:11px 24px;background:linear-gradient(135deg,#C8793A,#A05E2A);border:none;color:#fff;font-family:'Montserrat',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;cursor:pointer">Yes, I'm 13 or older</button><button onclick="cu29No()" style="padding:11px 24px;background:transparent;border:1.5px solid rgba(180,120,60,.35);color:#8BB5B0;font-family:'Montserrat',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;cursor:pointer">No, I'm under 13</button></div></div><div id="cu29-age-denied" style="display:none"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#C8793A" stroke-width="1.4" style="margin-bottom:1rem"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg><h2 style="font-family:'Bebas Neue',cursive;font-size:1.5rem;color:#EAE0D4;margin-bottom:.8rem">Access Denied</h2><p style="color:#8BB5B0;font-size:.78rem;line-height:1.7">This website is not available to users under 13. We do not collect personal data from children. Please close this page.</p></div></div></div><script>(function(){function getCookie(n){var m=document.cookie.match('(^|;)\s*'+n+'\s*=\s*([^;]+)');return m?m.pop():null}function setCookie(n,v,d){var e=new Date();e.setTime(e.getTime()+d*86400000);document.cookie=n+'='+v+';expires='+e.toUTCString()+';path=/;SameSite=Lax'}var g=document.getElementById('cu29-age-gate');if(!getCookie('cu29_age_ok'))g.style.display='flex';window.cu29Yes=function(){setCookie('cu29_age_ok','1',365);g.style.display='none'};window.cu29No=function(){document.getElementById('cu29-age-q').style.display='none';document.getElementById('cu29-age-denied').style.display='block';document.body.style.overflow='hidden'};})();</script>
+</html>
