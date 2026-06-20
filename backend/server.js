@@ -175,16 +175,16 @@ app.post('/api/apply',
     body('last_name').trim().isLength({ min: 1, max: 80 }).escape().withMessage('Last name required'),
     body('email').isEmail().normalizeEmail().withMessage('Valid email required'),
     body('phone').optional({ checkFalsy: true }).trim().isLength({ max: 30 }).escape(),
-    body('dob').isISO8601().withMessage('Valid date of birth required'),
-    body('nationality').trim().isLength({ min: 1, max: 80 }).escape().withMessage('Nationality required'),
-    body('country').trim().isLength({ min: 1, max: 80 }).escape().withMessage('Country required'),
+    body('dob').optional({ checkFalsy: true }).isISO8601().withMessage('Valid date of birth format required'),
+    body('nationality').optional({ checkFalsy: true }).trim().isLength({ max: 80 }).escape(),
+    body('country').optional({ checkFalsy: true }).trim().isLength({ max: 80 }).escape(),
     body('password')
       .isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
       .matches(/[A-Z]/).withMessage('Password must include an uppercase letter')
       .matches(/[0-9]/).withMessage('Password must include a number'),
     body('capital').optional().trim().isLength({ max: 50 }).escape(),
     body('source_of_funds').optional().trim().isLength({ max: 200 }).escape(),
-    body('pep').isIn(['yes', 'no']).withMessage('PEP declaration is required')
+    body('pep').optional({ checkFalsy: true }).isIn(['yes', 'no']).default('no')
   ],
   async (req, res) => {
     if (failValidation(req, res)) return;

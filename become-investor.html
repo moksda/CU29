@@ -544,19 +544,45 @@ function doInvestorSubmit(){
   f.append('source_of_funds',document.getElementById('inv-source-funds').value);
   f.append('pep',radioVal('pep'));
 
-  f.append('action','apply_investor');
-  fetch('https://script.google.com/macros/s/AKfycbxgdCnO9_Go_bbJO318vkNVdv7X7hjEbHaH0gEdG38dE8eraUa3LMCSKRADyJj389VqnQ/exec',{method:'POST',mode:'no-cors',body:f})
-  .then(function(){
-    suc.textContent='Application received! Your account has been created — you can sign in with your email and password once approved. Our investor relations team will be in touch within 72 hours.';
-    suc.style.display='block';
-    btn.textContent='Submitted';
-    if(window._cu29ClearInvestorDraft)window._cu29ClearInvestorDraft();
-  })
-  .catch(function(){
-    err.textContent='Something went wrong — please try again or contact compliance@investcu29.com directly.';
-    err.style.display='block';
-    btn.disabled=false;btn.textContent='Submit Application';
-  });
+  fetch('/api/csrf-token')
+    .then(function(r){return r.json();})
+    .then(function(t){
+      return fetch('/api/apply',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','X-CSRF-Token':t.csrfToken},
+        body:JSON.stringify({
+          first_name:fname,last_name:lname,email:email,password:pass,
+          dob:document.getElementById('inv-dob').value,
+          nationality:document.getElementById('inv-nationality').value,
+          country:document.getElementById('inv-country').value,
+          phone:phone,
+          investor_type:radioVal('type'),experience:radioVal('exp'),
+          history:checkVals('inv-history'),capital:radioVal('cap'),
+          horizon:radioVal('horizon'),interests:checkVals('inv-interests'),
+          risk:radioVal('risk'),expected_return:radioVal('ret'),
+          source_of_funds:document.getElementById('inv-source-funds').value,
+          pep:radioVal('pep')||'no'
+        })
+      });
+    })
+    .then(function(r){return r.json();})
+    .then(function(data){
+      if(data.success){
+        suc.textContent='Application received! Your account has been created — you can sign in with your email and password once approved. Our investor relations team will be in touch within 72 hours.';
+        suc.style.display='block';
+        btn.textContent='Submitted';
+        if(window._cu29ClearInvestorDraft)window._cu29ClearInvestorDraft();
+      } else {
+        var msg=(data.errors&&data.errors[0])||data.error||'Something went wrong.';
+        err.textContent=msg;err.style.display='block';
+        btn.disabled=false;btn.textContent='Submit Application';
+      }
+    })
+    .catch(function(){
+      err.textContent='Could not reach the server. Please try again or contact compliance@investcu29.com.';
+      err.style.display='block';
+      btn.disabled=false;btn.textContent='Submit Application';
+    });
 }
 </script>
 <script>
