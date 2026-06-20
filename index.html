@@ -378,8 +378,7 @@ function cu29SignOut(){
 </div>
 <script>
 (function(){
-  var TOKEN='d8r75c1r01quatddk21gd8r75c1r01quatddk220';
-  var BASE='https://finnhub.io/api/v1/quote?token='+TOKEN+'&symbol=';
+  var BASE='/api/market?sym=';
 
   var MARKETS=[
     {sym:'SPY',  name:'S&P 500'     },
@@ -438,17 +437,16 @@ function cu29SignOut(){
   }
 
   function fetchData(){
-    Promise.all(MARKETS.map(function(m){
-      return fetch(BASE+m.sym)
-        .then(function(r){ return r.json(); })
-        .then(function(d){
-          if(d.c&&d.c>0){
-            state[m.sym].price=d.c;
-            state[m.sym].pct=d.dp!=null?Math.round(d.dp*100)/100:null;
-          }
-        })
-        .catch(function(){});
-    })).then(function(){ saveCache(); render(); });
+    fetch('/api/market')
+      .then(function(r){return r.json();})
+      .then(function(data){
+        if(!data.ok||!data.quotes)return;
+        MARKETS.forEach(function(m){
+          var q=data.quotes[m.sym];
+          if(q&&q.price){state[m.sym].price=q.price;state[m.sym].pct=q.pct;}
+        });
+        saveCache();render();
+      }).catch(function(){});
   }
 
   loadCache();
