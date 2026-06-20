@@ -105,6 +105,7 @@ function failValidation(req, res) {
 // so Apps Script only ever receives clean values.
 async function callAppsScript(params, method = 'POST') {
   const base = process.env.APPS_SCRIPT_URL;
+  console.log('[appsScript] →', method, base.slice(-30), '| action:', params.action);
   let res, text;
   try {
     if (method === 'GET') {
@@ -120,9 +121,10 @@ async function callAppsScript(params, method = 'POST') {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
     });
     text = await res.text();
+    console.log('[appsScript] ←', res.status, text.slice(0, 120));
     return JSON.parse(text);
   } catch (err) {
-    console.error('[appsScript] status:', res && res.status, 'body:', text, 'err:', err.message);
+    console.error('[appsScript] ERROR', res && res.status, text && text.slice(0, 120), err.message);
     throw err;
   }
 }
