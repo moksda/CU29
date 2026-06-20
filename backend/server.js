@@ -105,15 +105,26 @@ function failValidation(req, res) {
 // so Apps Script only ever receives clean values.
 async function callAppsScript(params, method = 'POST') {
   const base = process.env.APPS_SCRIPT_URL;
-  if (method === 'GET') {
-    const qs = new URLSearchParams(params).toString();
-    return (await fetch(`${base}?${qs}`)).json();
+  let res, text;
+  try {
+    if (method === 'GET') {
+      const qs = new URLSearchParams(params).toString();
+      res = await fetch(`${base}?${qs}`, { redirect: 'follow' });
+      text = await res.text();
+      return JSON.parse(text);
+    }
+    res = await fetch(base, {
+      redirect: 'follow',
+      method: 'POST',
+      body: new URLSearchParams(params),
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    });
+    text = await res.text();
+    return JSON.parse(text);
+  } catch (err) {
+    console.error('[appsScript] status:', res && res.status, 'body:', text, 'err:', err.message);
+    throw err;
   }
-  return (await fetch(base, {
-    method: 'POST',
-    body: new URLSearchParams(params),
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-  })).json();
 }
 
 // ════════════════════════════════════════════════════════════════
