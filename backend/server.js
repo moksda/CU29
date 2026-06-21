@@ -7,7 +7,7 @@ const session    = require('express-session');
 const rateLimit  = require('express-rate-limit');
 const { body, validationResult } = require('express-validator');
 const bcrypt     = require('bcrypt');
-const csrf       = require('csurf');
+const { doubleCsrf } = require('csrf-csrf');
 const cookieParser = require('cookie-parser');
 
 const app  = express();
@@ -65,12 +65,19 @@ app.use(session({
     httpOnly: true,
     secure: PROD,
     sameSite: 'strict',
-    maxAge: 24 * 60 * 60 * 1000  // 24 hours
+    maxAge: 30 * 60 * 1000  // 30 minutes — financial platform best practice
   }
 }));
 
 // ── CSRF ──────────────────────────────────────────────────────────
-const csrfProtection = csrf({ cookie: false });  // session-based, not cookie
+const { generateToken, doubleCsrfProtection } = doubleCsrf({
+  getSecret: () => process.env.SESSION_SECRET,
+  cookieName: '__Host-psifi.x-csrf-token',
+  cookieOptions: { secure: PROD, sameSite: 'strict', httpOnly: true },
+  size: 64,
+  getTokenFromRequest: (req) => req.headers['x-csrf-token'] || req.body?._csrf
+});
+const csrfProtection = doubleCsrfProtection;
 
 // ── Rate limiters ─────────────────────────────────────────────────
 const loginLimiter = rateLimit({
@@ -86,6 +93,12 @@ const globalLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 60,
   message: { success: false, error: 'Too many requests.' }
+});
+
+const applyLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,  // 1 hour
+  max: 5,
+  message: { success: false, error: 'Too many registration attempts. Try again in 1 hour.' }
 });
 
 app.use('/api/', globalLimiter);
@@ -134,8 +147,8 @@ async function callAppsScript(params, method = 'POST') {
 // ════════════════════════════════════════════════════════════════
 
 // CSRF token — fetch this before submitting any form
-app.get('/api/csrf-token', csrfProtection, (req, res) => {
-  res.json({ csrfToken: req.csrfToken() });
+app.get('/api/csrf-token', (req, res) => {
+  res.json({ csrfToken: generateToken(req, res) });
 });
 
 // ── Login ─────────────────────────────────────────────────────────
@@ -162,9 +175,13 @@ app.post('/api/login',
         return res.json({ success: true, name: 'Admin', role: 'admin' });
       }
 
-      // Regular investors — Apps Script returns success/name/role on match
-      const data = await callAppsScript({ action: 'login', email, password }, 'GET');
+      // Regular investors — Apps Script returns the stored bcrypt hash, we compare here
+      const data = await callAppsScript({ action: 'login', email, password }, 'POST');
       if (!data.success) return res.status(401).json({ success: false, error: 'Invalid credentials' });
+
+      // Verify password against bcrypt hash server-side (never trust plain-text comparison)
+      const passwordMatch = await bcrypt.compare(password, data.hash);
+      if (!passwordMatch) return res.status(401).json({ success: false, error: 'Invalid credentials' });
 
       req.session.user = { name: data.name, role: data.role || 'investor', email: data.email };
       res.json({ success: true, name: data.name, role: data.role || 'investor' });
@@ -182,6 +199,7 @@ app.post('/api/logout', (req, res) => {
 
 // ── Investor application ──────────────────────────────────────────
 app.post('/api/apply',
+  applyLimiter,
   csrfProtection,
   [
     body('first_name').trim().isLength({ min: 1, max: 80 }).escape().withMessage('First name required'),
@@ -258,6 +276,16 @@ app.get('/api/market', async (req, res) => {
 
 // ── Serve static HTML files ───────────────────────────────────────
 const path = require('path');
+
+// Block sensitive files from being served publicly
+app.use((req, res, next) => {
+  const blocked = ['/users.js', '/.env', '/backend/server.js', '/backend/.env'];
+  if (blocked.includes(req.path.toLowerCase())) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  next();
+});
+
 app.use(express.static(path.join(__dirname, '..')));
 
 // ── 404 ───────────────────────────────────────────────────────────
@@ -265,7 +293,7 @@ app.use((req, res) => res.status(404).json({ error: 'Not found' }));
 
 // ── Error handler (catches CSRF token errors too) ──────────────────
 app.use((err, req, res, next) => {
-  if (err.code === 'EBADCSRFTOKEN') {
+  if (err.code === 'EBADCSRFTOKEN' || err.message === 'invalid csrf token') {
     return res.status(403).json({ success: false, error: 'Invalid or missing CSRF token' });
   }
   console.error(err);

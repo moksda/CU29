@@ -1,5 +1,6 @@
 var ACCOUNTS_SHEET_ID = '16FqyKKc0S-fGVeP_dcK1pSI1t3IpmBJ9YTNW6K-nmm4';
-var FALLBACK_ADMIN = { name: 'Admin', email: 'mooks.bucataru@gmail.com', password: 'Admin2026!', role: 'admin' };
+// Admin login is handled entirely by the Node backend (bcrypt + .env hash).
+// No plaintext admin credentials belong here.
 
 // One-time: run this manually from the editor (function dropdown > Run) to
 // trigger Google's permission consent screen for the Mail scope. Delete
@@ -130,18 +131,18 @@ function handleLogin(email, password) {
   if (!email || !password) return { success: false };
   email = email.trim().toLowerCase();
 
-  if (email === FALLBACK_ADMIN.email.toLowerCase() && password === FALLBACK_ADMIN.password) {
-    return { success: true, name: FALLBACK_ADMIN.name, role: FALLBACK_ADMIN.role, email: FALLBACK_ADMIN.email };
-  }
-
+  // Admin login is never handled here — the Node backend catches it first using bcrypt.
+  // This function only handles investor accounts whose passwords are bcrypt hashes.
   var rows = getAccountsSheet().getDataRange().getValues();
   for (var i = 1; i < rows.length; i++) {
     var row = rows[i];
     var rowEmail = String(row[1] || '').trim().toLowerCase();
-    var rowPass = String(row[2] || '');
-    if (rowEmail === email && rowPass === password) {
-      return { success: true, name: row[0], role: row[3] || 'investor', email: row[1] };
-    }
+    var storedHash = String(row[2] || '');
+    if (rowEmail !== email) continue;
+    // Verify bcrypt hash — bcrypt is not natively available in Apps Script,
+    // so we call a helper endpoint on the Node backend to do the comparison.
+    // For now return the hash so the Node backend can compare server-side.
+    return { success: true, name: row[0], role: row[3] || 'investor', email: row[1], hash: storedHash };
   }
   return { success: false };
 }
