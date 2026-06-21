@@ -182,9 +182,13 @@ app.post('/api/login',
     try {
       const { email, password } = req.body;
 
+      const adminEmail = (process.env.ADMIN_EMAIL || '').toLowerCase();
+      console.log('[login] email:', email, '| adminEmail:', adminEmail, '| match:', email === adminEmail, '| hashSet:', !!process.env.ADMIN_PASSWORD_HASH);
+
       // Admin — compared against bcrypt hash in .env, never hits the sheet
-      if (email === process.env.ADMIN_EMAIL.toLowerCase()) {
+      if (email === adminEmail) {
         const ok = await bcrypt.compare(password, process.env.ADMIN_PASSWORD_HASH);
+        console.log('[login] bcrypt result:', ok);
         if (!ok) return res.status(401).json({ success: false, error: 'Invalid credentials' });
         const adminUser = { name: 'Admin', role: 'admin', email };
         if (process.env.ADMIN_2FA_SECRET) {
