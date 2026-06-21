@@ -185,14 +185,15 @@ app.post('/api/login',
 
       const adminEmail = (process.env.ADMIN_EMAIL || '').toLowerCase();
 
-      // Admin — timing-safe plain-text comparison using ADMIN_PASSWORD env var
+      // Admin — tries ADMIN_PASSWORD (plain) then ADMIN_PASSWORD_HASH (bcrypt)
       if (email === adminEmail) {
-        const adminPwd = process.env.ADMIN_PASSWORD || '';
         let ok = false;
-        try {
-          ok = adminPwd.length > 0 &&
-               crypto.timingSafeEqual(Buffer.from(password), Buffer.from(adminPwd));
-        } catch { ok = false; }
+        const adminPwd = (process.env.ADMIN_PASSWORD || '').trim();
+        if (adminPwd) {
+          ok = adminPwd === password.trim();
+        } else if (process.env.ADMIN_PASSWORD_HASH) {
+          ok = await bcrypt.compare(password, process.env.ADMIN_PASSWORD_HASH);
+        }
         if (!ok) return res.status(401).json({ success: false, error: 'Invalid credentials' });
         const adminUser = { name: 'Admin', role: 'admin', email };
         if (process.env.ADMIN_2FA_SECRET) {
@@ -414,8 +415,39 @@ app.get('/api/market', async (req, res) => {
   }
 });
 
+// ── Claude AI proxy (for test-auth loop) ─────────────────────────
+app.post('/api/claude-proxy', async (req, res) => {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return res.status(503).json({ error: 'ANTHROPIC_API_KEY not configured' });
+  }
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify(req.body)
+    });
+    const data = await response.json();
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ── Serve static HTML files ───────────────────────────────────────
 const path = require('path');
+
+// Test-auth page gets its own CSP that allows CDN scripts + Babel eval
+app.get('/test-auth', (req, res) => {
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' unpkg.com; connect-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:"
+  );
+  res.sendFile(path.join(__dirname, '..', 'test-auth.html'));
+});
 
 // Block sensitive files from being served publicly
 app.use((req, res, next) => {

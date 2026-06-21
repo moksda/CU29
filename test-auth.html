@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>InvestCU29 · Auth Test Loop</title>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Inter',system-ui,sans-serif}</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const C={teal:"#01464a",tealDark:"#012e31",tealMid:"#01565a",copper:"#b87333",copperL:"#d4924a",cream:"#f5f0e8",white:"#ffffff",grey:"#94a3b8",dark:"#0a1a1b",error:"#ef4444",success:"#22c55e"};
+const btn=(extra={})=>({padding:"12px 24px",borderRadius:6,border:"none",fontFamily:"inherit",fontWeight:600,fontSize:14,cursor:"pointer",transition:"all 0.2s",...extra});
+
+// ── In-memory DB (simulates backend) ─────────────────────────────
+const DB={users:[],sessions:[],logs:[],
+  addUser(u){this.users.push(u)},findUser(e){return this.users.find(u=>u.email===e)},
+  findById(id){return this.users.find(u=>u.id===id)},
+  updateUser(id,p){const i=this.users.findIndex(u=>u.id===id);if(i>-1)Object.assign(this.users[i],p)},
+  addSession(s){this.sessions.push(s)},
+  log(a,d,p){this.logs.unshift({ts:new Date().toLocaleTimeString(),action:a,detail:d,pass:p})}
+};
+function hashPass(p){return btoa(p+"cu29salt!")}
+function checkPass(p,h){return hashPass(p)===h}
+function randToken(){return Math.random().toString(36).slice(2)+Date.now()}
+function rand6(){return String(Math.floor(100000+Math.random()*900000))}
+
+// ── Also test real backend ────────────────────────────────────────
+let _csrfToken=null;
+async function getCsrf(){
+  if(_csrfToken)return _csrfToken;
+  const r=await fetch('/api/csrf-token',{credentials:'include'});
+  const d=await r.json();
+  _csrfToken=d.csrfToken;
+  return _csrfToken;
+}
+async function realLogin(email,password){
+  try{
+    const tok=await getCsrf();
+    const r=await fetch('/api/login',{method:'POST',credentials:'include',
+      headers:{'Content-Type':'application/json','x-csrf-token':tok},
+      body:JSON.stringify({email,password})});
+    _csrfToken=null;
+    return await r.json();
+  }catch(e){return{ok:false,msg:e.message}}
+}
+
+// ── AI test generator ─────────────────────────────────────────────
+const SYSTEM=`You are a QA engineer testing a sign-in system for InvestCU29.
+Run functional tests on the auth flow. Only test:
+1. Registration (valid/invalid inputs)
+2. Login (correct/wrong credentials)
+3. 2FA code verification (correct/wrong/expired)
+4. Database checks
+
+For each test output JSON only:
+{"action":"register"|"login"|"verify2fa"|"check_db","payload":{...},"expect":"pass"|"fail","reason":"one line"}
+Registration payload:{name,email,password}
+Login payload:{email,password}
+Verify2FA payload:{email,code}
+Check_db payload:{email}`;
+
+async function askClaude(messages){
+  const res=await fetch('/api/claude-proxy',{method:'POST',credentials:'include',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:400,system:SYSTEM,messages})});
+  const d=await res.json();
+  return d.content?.[0]?.text||'{}';
+}
+
+// ── Auth engine ───────────────────────────────────────────────────
+function runAction(action,payload){
+  if(action==="register"){
+    const{name,email,password}=payload;
+    if(!name||name.length<2)return{ok:false,msg:"Name too short"};
+    if(!email||!email.includes("@"))return{ok:false,msg:"Invalid email"};
+    if(!password||password.length<8)return{ok:false,msg:"Password min 8 chars"};
+    if(DB.findUser(email))return{ok:false,msg:"Email already registered"};
+    const user={id:randToken(),email,name,password:hashPass(password),approved:false,twoFaCode:null,twoFaExpiry:null};
+    DB.addUser(user);
+    return{ok:true,msg:`User registered. ID: ${user.id.slice(0,8)}`};
+  }
+  if(action==="login"){
+    const{email,password}=payload;
+    const user=DB.findUser(email);
+    if(!user)return{ok:false,msg:"User not found"};
+    if(!checkPass(password,user.password))return{ok:false,msg:"Wrong password"};
+    const code=rand6(),expiry=Date.now()+5*60*1000;
+    DB.updateUser(user.id,{twoFaCode:code,twoFaExpiry:expiry});
+    return{ok:true,msg:`2FA code: ${code}`,code};
+  }
+  if(action==="verify2fa"){
+    const{email,code}=payload;
+    const user=DB.findUser(email);
+    if(!user)return{ok:false,msg:"User not found"};
+    if(!user.twoFaCode)return{ok:false,msg:"No 2FA pending"};
+    if(Date.now()>user.twoFaExpiry)return{ok:false,msg:"2FA expired"};
+    if(user.twoFaCode!==String(code))return{ok:false,msg:"Wrong code"};
+    const token=randToken();
+    DB.addSession({token,userId:user.id,createdAt:new Date()});
+    DB.updateUser(user.id,{twoFaCode:null,twoFaExpiry:null});
+    return{ok:true,msg:`Signed in. Token: ${token.slice(0,12)}…`};
+  }
+  if(action==="check_db"){
+    const{email}=payload;
+    const user=DB.findUser(email);
+    if(!user)return{ok:false,msg:"Not in DB"};
+    return{ok:true,msg:`name="${user.name}", approved=${user.approved}, 2FA=${!!user.twoFaCode}`};
+  }
+  return{ok:false,msg:"Unknown action"};
+}
+
+// ── Main component ────────────────────────────────────────────────
+function App(){
+  const[running,setRunning]=React.useState(false);
+  const[logs,setLogs]=React.useState([]);
+  const[dbView,setDbView]=React.useState([]);
+  const[status,setStatus]=React.useState("idle");
+  const abortRef=React.useRef(false);
+  const histRef=React.useRef([]);
+
+  async function runLoop(){
+    setRunning(true);setLogs([]);
+    DB.users=[];DB.sessions=[];DB.logs=[];
+    abortRef.current=false;histRef.current=[];
+    const MAX=12;
+    let ctx="Start testing the InvestCU29 auth flow. Begin with registration.";
+    for(let i=0;i<MAX;i++){
+      if(abortRef.current)break;
+      setStatus(`Test ${i+1}/${MAX}…`);
+      histRef.current.push({role:"user",content:ctx});
+      try{
+        let raw=await askClaude(histRef.current);
+        raw=raw.replace(/```json|```/g,"").trim();
+        const test=JSON.parse(raw);
+        const{action,payload,expect,reason}=test;
+        const result=runAction(action,payload);
+        const testPass=(expect==="pass")===result.ok;
+        const entry={id:i+1,action,payload,expect,actual:result.ok?"pass":"fail",msg:result.msg,reason,ok:testPass,code:result.code||null};
+        setLogs(p=>[...p,entry]);
+        DB.log(action,result.msg,testPass);
+        ctx=`Test ${i+1}: action="${action}", payload=${JSON.stringify(payload)}, result="${result.msg}", passed=${testPass}. Run next test.`;
+        histRef.current.push({role:"assistant",content:raw});
+      }catch(e){
+        setLogs(p=>[...p,{id:i+1,action:"error",msg:e.message,ok:false,payload:{},reason:"parse/network error"}]);
+      }
+      setDbView([...DB.users]);
+      await new Promise(r=>setTimeout(r,700));
+    }
+    setStatus("Done");setRunning(false);
+  }
+
+  const passed=logs.filter(l=>l.ok).length;
+  const failed=logs.filter(l=>!l.ok).length;
+
+  return(
+    <div style={{fontFamily:"'Inter',system-ui,sans-serif",background:C.dark,minHeight:"100vh",color:C.cream}}>
+      <div style={{background:C.tealDark,borderBottom:`1px solid ${C.tealMid}`,padding:"14px 24px",display:"flex",alignItems:"center",gap:14}}>
+        <div style={{background:`linear-gradient(135deg,${C.copper},${C.copperL})`,borderRadius:8,width:36,height:36,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:700,color:C.tealDark}}>Cu</div>
+        <div>
+          <div style={{fontWeight:700,fontSize:15,color:C.cream}}>InvestCU29 · Auth Test Loop</div>
+          <div style={{fontSize:11,color:C.grey}}>AI-powered functional test runner · register · login · 2FA · DB</div>
+        </div>
+        <div style={{marginLeft:"auto",display:"flex",gap:10,alignItems:"center"}}>
+          {running&&<div style={{fontSize:12,color:C.copperL}}>{status}</div>}
+          {!running
+            ?<button onClick={runLoop} style={btn({background:`linear-gradient(135deg,${C.copper},${C.copperL})`,color:C.tealDark})}>▶ Run Tests</button>
+            :<button onClick={()=>{abortRef.current=true;setRunning(false);setStatus("Stopped")}} style={btn({background:"transparent",border:`1px solid ${C.error}`,color:C.error})}>■ Stop</button>}
+        </div>
+      </div>
+      <div style={{display:"flex",height:"calc(100vh - 65px)"}}>
+        <div style={{flex:1,overflowY:"auto",padding:16,display:"flex",flexDirection:"column",gap:8}}>
+          {logs.length>0&&(
+            <div style={{display:"flex",gap:12,marginBottom:4}}>
+              <div style={{padding:"6px 14px",borderRadius:20,background:"#15803d22",border:`1px solid ${C.success}`,fontSize:12,color:C.success}}>✓ {passed} passed</div>
+              <div style={{padding:"6px 14px",borderRadius:20,background:"#ef444422",border:`1px solid ${C.error}`,fontSize:12,color:C.error}}>✗ {failed} failed</div>
+            </div>
+          )}
+          {logs.length===0&&!running&&<div style={{textAlign:"center",marginTop:60,color:C.grey,fontSize:13}}>Press <b style={{color:C.copperL}}>Run Tests</b> — Claude autonomously tests the entire auth flow</div>}
+          {logs.map(l=>(
+            <div key={l.id} style={{background:l.ok?"#15803d18":"#ef444418",border:`1px solid ${l.ok?"#15803d55":"#ef444455"}`,borderLeft:`3px solid ${l.ok?C.success:C.error}`,borderRadius:8,padding:"10px 14px"}}>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                <span style={{fontSize:11,fontWeight:700,color:C.copperL}}>#{l.id} {(l.action||"").toUpperCase()}</span>
+                <span style={{fontSize:11,color:l.ok?C.success:C.error,fontWeight:700}}>{l.ok?"✓ PASS":"✗ FAIL"}</span>
+              </div>
+              <div style={{fontSize:12,color:C.cream,marginBottom:2}}><b>Payload:</b> {JSON.stringify(l.payload)}</div>
+              <div style={{fontSize:12,color:C.grey}}><b>Result:</b> {l.msg}</div>
+              {l.code&&<div style={{fontSize:12,color:C.copperL,marginTop:2}}>📱 2FA code: <b>{l.code}</b></div>}
+              <div style={{fontSize:11,color:C.grey,marginTop:4,fontStyle:"italic"}}>Expected: {l.expect} · Got: {l.actual} · {l.reason}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{width:260,borderLeft:`1px solid ${C.tealMid}`,padding:14,overflowY:"auto",background:C.tealDark}}>
+          <div style={{fontSize:11,fontWeight:700,color:C.copperL,letterSpacing:"0.8px",marginBottom:10}}>DATABASE · USERS</div>
+          {dbView.length===0?<div style={{fontSize:12,color:C.grey}}>Empty — run tests to populate</div>:dbView.map(u=>(
+            <div key={u.id} style={{background:"#01464a",border:`1px solid ${C.tealMid}`,borderRadius:6,padding:"10px 12px",marginBottom:8}}>
+              <div style={{fontSize:12,fontWeight:700,color:C.cream}}>{u.name}</div>
+              <div style={{fontSize:11,color:C.grey}}>{u.email}</div>
+              <div style={{display:"flex",gap:6,marginTop:6,flexWrap:"wrap"}}>
+                <span style={{fontSize:10,padding:"2px 7px",borderRadius:10,background:u.approved?"#15803d44":"#b8733344",color:u.approved?C.success:C.copperL}}>{u.approved?"approved":"pending"}</span>
+                <span style={{fontSize:10,padding:"2px 7px",borderRadius:10,background:"#01464a",color:C.grey,border:`1px solid ${C.tealMid}`}}>{u.twoFaCode?`2FA: ${u.twoFaCode}`:"no 2FA"}</span>
+              </div>
+            </div>
+          ))}
+          {DB.sessions.length>0&&<>
+            <div style={{fontSize:11,fontWeight:700,color:C.copperL,margin:"14px 0 8px"}}>SESSIONS</div>
+            {DB.sessions.map((s,i)=><div key={i} style={{fontSize:11,color:C.grey,padding:"6px 10px",background:"#01464a",borderRadius:6,marginBottom:6}}>🔑 {s.token.slice(0,16)}…</div>)}
+          </>}
+        </div>
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
