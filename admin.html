@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Admin — InvestCu29</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --teal:#01464a;--teal-mid:#015558;--teal-card:#016068;--teal-dark:#012e31;
+  --border:rgba(180,120,60,0.22);--border-dim:rgba(180,120,60,0.1);
+  --copper:#C8793A;--copper-hi:#E09458;--copper-lo:#A05E2A;--copper-pale:#F0C08A;
+  --text:#EAE0D4;--text-mid:#8BB5B0;--text-dim:#3A6A6A;
+  --green:#22c55e;--green-bg:rgba(34,197,94,0.1);--green-border:rgba(34,197,94,0.3);
+  --red:#ef4444;--red-bg:rgba(239,68,68,0.1);--red-border:rgba(239,68,68,0.3);
+  --yellow:#f59e0b;--yellow-bg:rgba(245,158,11,0.1);--yellow-border:rgba(245,158,11,0.3);
+}
+html{scroll-behavior:smooth}
+body{background:var(--teal-dark);color:var(--text);font-family:'Montserrat',sans-serif;min-height:100vh}
+
+/* ── Nav ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;height:64px;
+  display:flex;align-items:center;justify-content:space-between;padding:0 3vw;
+  background:rgba(1,28,32,0.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.nav-brand{display:flex;align-items:center;gap:12px;text-decoration:none}
+.nav-brand-logo{background:linear-gradient(135deg,var(--copper),var(--copper-hi));
+  border-radius:6px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;
+  font-family:'Bebas Neue',sans-serif;font-size:16px;color:var(--teal-dark);letter-spacing:1px}
+.nav-brand-text{font-size:.65rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--text-mid)}
+.nav-brand-text span{color:var(--copper-pale)}
+.nav-right{display:flex;align-items:center;gap:16px}
+.nav-badge{font-size:.62rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--copper-pale);padding:5px 12px;border:1px solid var(--border);border-radius:3px}
+.nav-signout{font-size:.62rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--text-dim);background:none;border:none;cursor:pointer;font-family:inherit;padding:0;
+  transition:color .2s}
+.nav-signout:hover{color:var(--red)}
+
+/* ── Page ── */
+.page{padding-top:64px;min-height:100vh}
+.page-header{padding:2.5rem 3vw 0;border-bottom:1px solid var(--border-dim)}
+.page-title{font-family:'Bebas Neue',sans-serif;font-size:2.4rem;letter-spacing:.08em;
+  color:var(--text);line-height:1;margin-bottom:.3rem}
+.page-title span{color:var(--copper)}
+.page-sub{font-size:.72rem;color:var(--text-mid);letter-spacing:.04em;margin-bottom:2rem}
+
+/* ── Stat bar ── */
+.stat-bar{display:flex;gap:1px;background:var(--border-dim);margin:0 3vw;border-radius:6px;
+  overflow:hidden;margin-top:1.5rem}
+.stat{flex:1;background:rgba(1,46,50,.7);padding:1rem 1.5rem;text-align:center}
+.stat-n{font-size:1.8rem;font-weight:700;color:var(--copper-pale);line-height:1;font-family:'Bebas Neue',sans-serif;letter-spacing:.05em}
+.stat-label{font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--text-mid);margin-top:.25rem}
+
+/* ── Tabs ── */
+.tabs{display:flex;gap:0;padding:0 3vw;margin-top:0;border-bottom:1px solid var(--border-dim)}
+.tab{font-size:.67rem;font-weight:600;letter-spacing:.15em;text-transform:uppercase;
+  padding:1rem 1.5rem;background:none;border:none;border-bottom:2px solid transparent;
+  color:var(--text-dim);cursor:pointer;font-family:inherit;transition:all .2s;margin-bottom:-1px}
+.tab:hover{color:var(--text-mid)}
+.tab.active{color:var(--copper-pale);border-bottom-color:var(--copper)}
+.tab-badge{display:inline-flex;align-items:center;justify-content:center;
+  background:var(--copper-lo);color:var(--copper-pale);
+  border-radius:10px;font-size:.55rem;font-weight:700;padding:2px 7px;margin-left:6px;min-width:18px}
+
+/* ── Content area ── */
+.content{padding:2rem 3vw;display:none}
+.content.active{display:block}
+
+/* ── Cards ── */
+.card-list{display:flex;flex-direction:column;gap:12px}
+.card{background:rgba(1,46,50,.5);border:1px solid var(--border-dim);border-radius:8px;overflow:hidden}
+.card-header{display:flex;align-items:center;gap:16px;padding:1rem 1.25rem;cursor:pointer;
+  transition:background .15s}
+.card-header:hover{background:rgba(1,70,74,.4)}
+.card-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--copper-lo),var(--copper));
+  display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;
+  color:var(--teal-dark);flex-shrink:0;text-transform:uppercase}
+.card-main{flex:1;min-width:0}
+.card-name{font-size:.8rem;font-weight:600;color:var(--text);margin-bottom:.2rem}
+.card-email{font-size:.7rem;color:var(--text-mid);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card-meta{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.card-date{font-size:.62rem;color:var(--text-dim);white-space:nowrap}
+.card-actions{display:flex;gap:8px;align-items:center}
+.card-chevron{color:var(--text-dim);font-size:.7rem;transition:transform .2s;flex-shrink:0}
+.card.expanded .card-chevron{transform:rotate(180deg)}
+.card-body{display:none;padding:0 1.25rem 1.25rem;border-top:1px solid var(--border-dim)}
+.card.expanded .card-body{display:block}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.75rem;padding-top:1rem}
+.card-field{font-size:.68rem}
+.card-field-label{color:var(--text-dim);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.2rem;font-size:.58rem}
+.card-field-value{color:var(--text-mid)}
+.card-message{font-size:.72rem;color:var(--text-mid);line-height:1.6;padding-top:1rem;
+  border-top:1px solid var(--border-dim);margin-top:1rem;white-space:pre-wrap}
+
+/* ── Badges ── */
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:12px;
+  font-size:.58rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.badge-approved{background:var(--green-bg);border:1px solid var(--green-border);color:var(--green)}
+.badge-pending{background:var(--yellow-bg);border:1px solid var(--yellow-border);color:var(--yellow)}
+.badge-rejected{background:var(--red-bg);border:1px solid var(--red-border);color:var(--red)}
+.badge-legacy{background:rgba(139,181,176,.1);border:1px solid rgba(139,181,176,.25);color:var(--text-mid)}
+.badge-2fa{background:rgba(1,96,104,.5);border:1px solid rgba(1,150,164,.3);color:#67c5d0;font-size:.55rem;padding:2px 8px}
+
+/* ── Buttons ── */
+.btn{font-size:.63rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  padding:7px 14px;border-radius:4px;border:none;cursor:pointer;font-family:inherit;
+  transition:all .15s;white-space:nowrap}
+.btn-approve{background:var(--green-bg);border:1px solid var(--green-border);color:var(--green)}
+.btn-approve:hover{background:var(--green);color:#fff}
+.btn-reject{background:var(--red-bg);border:1px solid var(--red-border);color:var(--red)}
+.btn-reject:hover{background:var(--red);color:#fff}
+.btn-pending{background:var(--yellow-bg);border:1px solid var(--yellow-border);color:var(--yellow)}
+.btn-pending:hover{background:var(--yellow);color:#000}
+
+/* ── Search/filter bar ── */
+.toolbar{display:flex;gap:12px;margin-bottom:1.5rem;align-items:center}
+.search-wrap{position:relative;flex:1;max-width:360px}
+.search-wrap input{width:100%;background:rgba(1,46,50,.6);border:1px solid var(--border-dim);
+  color:var(--text);padding:9px 12px 9px 36px;font-family:inherit;font-size:.72rem;
+  border-radius:4px;outline:none;transition:border-color .2s}
+.search-wrap input:focus{border-color:var(--copper-lo)}
+.search-wrap input::placeholder{color:var(--text-dim)}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-dim);font-size:.8rem}
+.filter-select{background:rgba(1,46,50,.6);border:1px solid var(--border-dim);color:var(--text-mid);
+  padding:9px 12px;font-family:inherit;font-size:.68rem;border-radius:4px;outline:none;cursor:pointer}
+
+/* ── Empty state ── */
+.empty{text-align:center;padding:4rem 2rem;color:var(--text-dim)}
+.empty-icon{font-size:2.5rem;margin-bottom:1rem;opacity:.4}
+.empty-text{font-size:.75rem;letter-spacing:.06em}
+
+/* ── Loading ── */
+.loading{text-align:center;padding:3rem;color:var(--text-dim);font-size:.72rem;letter-spacing:.08em}
+.spinner{display:inline-block;width:24px;height:24px;border:2px solid var(--border-dim);
+  border-top-color:var(--copper);border-radius:50%;animation:spin .7s linear infinite;margin-bottom:.75rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Auth overlay ── */
+#auth-overlay{position:fixed;inset:0;background:var(--teal-dark);z-index:999;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem}
+.auth-spinner{width:36px;height:36px;border:3px solid var(--border-dim);border-top-color:var(--copper);
+  border-radius:50%;animation:spin .7s linear infinite}
+#auth-overlay p{font-size:.72rem;color:var(--text-mid);letter-spacing:.1em;text-transform:uppercase}
+
+/* ── Toast ── */
+#toast{position:fixed;bottom:2rem;right:2rem;padding:12px 20px;border-radius:6px;
+  font-size:.72rem;font-weight:600;letter-spacing:.06em;z-index:300;
+  transform:translateY(100px);opacity:0;transition:all .3s;pointer-events:none}
+#toast.show{transform:translateY(0);opacity:1}
+#toast.success{background:var(--green-bg);border:1px solid var(--green-border);color:var(--green)}
+#toast.error{background:var(--red-bg);border:1px solid var(--red-border);color:var(--red)}
+</style>
+</head>
+<body>
+
+<div id="auth-overlay">
+  <div class="auth-spinner"></div>
+  <p>Verifying admin access…</p>
+</div>
+
+<div id="toast"></div>
+
+<nav>
+  <a href="index.html" class="nav-brand">
+    <div class="nav-brand-logo">Cu</div>
+    <div class="nav-brand-text"><span>Invest</span>Cu29 · Admin</div>
+  </a>
+  <div class="nav-right">
+    <div class="nav-badge" id="nav-badge">ADM · Admin</div>
+    <button class="nav-signout" onclick="signOut()">Sign Out</button>
+  </div>
+</nav>
+
+<div class="page" id="main" style="display:none">
+  <div class="page-header">
+    <h1 class="page-title">Admin <span>Dashboard</span></h1>
+    <p class="page-sub">Investor applications · Account management · Contact inbox</p>
+    <div class="stat-bar">
+      <div class="stat"><div class="stat-n" id="stat-pending">–</div><div class="stat-label">Pending Applications</div></div>
+      <div class="stat"><div class="stat-n" id="stat-investors">–</div><div class="stat-label">Total Investors</div></div>
+      <div class="stat"><div class="stat-n" id="stat-approved">–</div><div class="stat-label">Approved</div></div>
+      <div class="stat"><div class="stat-n" id="stat-contacts">–</div><div class="stat-label">Contact Msgs</div></div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('applications')" id="tab-btn-applications">
+      Applications <span class="tab-badge" id="tbadge-applications">0</span>
+    </button>
+    <button class="tab" onclick="switchTab('investors')" id="tab-btn-investors">
+      Investors <span class="tab-badge" id="tbadge-investors">0</span>
+    </button>
+    <button class="tab" onclick="switchTab('contacts')" id="tab-btn-contacts">
+      Contacts <span class="tab-badge" id="tbadge-contacts">0</span>
+    </button>
+  </div>
+
+  <!-- Applications -->
+  <div class="content active" id="content-applications">
+    <div class="toolbar">
+      <div class="search-wrap">
+        <span class="search-icon">⌕</span>
+        <input type="text" id="search-applications" placeholder="Search name or email…" oninput="filterCards('applications')">
+      </div>
+      <select class="filter-select" id="filter-applications" onchange="filterCards('applications')">
+        <option value="all">All statuses</option>
+        <option value="pending">Pending</option>
+        <option value="approved">Approved</option>
+        <option value="rejected">Rejected</option>
+      </select>
+    </div>
+    <div class="card-list" id="list-applications">
+      <div class="loading"><div class="spinner"></div><br>Loading applications…</div>
+    </div>
+  </div>
+
+  <!-- Investors -->
+  <div class="content" id="content-investors">
+    <div class="toolbar">
+      <div class="search-wrap">
+        <span class="search-icon">⌕</span>
+        <input type="text" id="search-investors" placeholder="Search name or email…" oninput="filterCards('investors')">
+      </div>
+      <select class="filter-select" id="filter-investors" onchange="filterCards('investors')">
+        <option value="all">All statuses</option>
+        <option value="">Legacy (auto-approved)</option>
+        <option value="approved">Approved</option>
+        <option value="pending">Pending</option>
+        <option value="rejected">Rejected</option>
+      </select>
+    </div>
+    <div class="card-list" id="list-investors">
+      <div class="loading"><div class="spinner"></div><br>Loading investors…</div>
+    </div>
+  </div>
+
+  <!-- Contacts -->
+  <div class="content" id="content-contacts">
+    <div class="toolbar">
+      <div class="search-wrap">
+        <span class="search-icon">⌕</span>
+        <input type="text" id="search-contacts" placeholder="Search name, email, or subject…" oninput="filterCards('contacts')">
+      </div>
+      <select class="filter-select" id="filter-contacts" onchange="filterCards('contacts')">
+        <option value="all">All departments</option>
+        <option value="General Inquiries">General Inquiries</option>
+        <option value="Compliance & Verification">Compliance</option>
+        <option value="Charity & Impact">Charity & Impact</option>
+      </select>
+    </div>
+    <div class="card-list" id="list-contacts">
+      <div class="loading"><div class="spinner"></div><br>Loading contacts…</div>
+    </div>
+  </div>
+</div>
+
+<script>
+var CU29_API = '';
+var _csrfToken = null;
+var _data = { applications: [], investors: [], contacts: [] };
+
+// ── CSRF + API helpers ────────────────────────────────────────────
+async function getCsrf() {
+  if (_csrfToken) return _csrfToken;
+  var r = await fetch(CU29_API + '/api/csrf-token', { credentials: 'include' });
+  var d = await r.json();
+  _csrfToken = d.csrfToken;
+  return _csrfToken;
+}
+async function apiPost(url, body) {
+  var tok = await getCsrf();
+  var r = await fetch(CU29_API + url, {
+    method: 'POST', credentials: 'include',
+    headers: { 'Content-Type': 'application/json', 'x-csrf-token': tok },
+    body: JSON.stringify(body)
+  });
+  _csrfToken = null;
+  return r.json();
+}
+
+// ── Auth check ────────────────────────────────────────────────────
+async function checkAuth() {
+  try {
+    var local = JSON.parse(localStorage.getItem('cu29_session') || 'null');
+    if (!local || local.role !== 'admin' || local.exp <= Date.now()) {
+      window.location.href = 'signin.html';
+      return;
+    }
+    var r = await fetch(CU29_API + '/api/me', { credentials: 'include' });
+    var d = await r.json();
+    if (!d.authenticated || d.role !== 'admin') {
+      window.location.href = 'signin.html';
+      return;
+    }
+    document.getElementById('nav-badge').textContent = 'ADM · ' + (d.name || 'Admin').split(' ')[0];
+    document.getElementById('auth-overlay').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+    loadAll();
+  } catch (e) {
+    window.location.href = 'signin.html';
+  }
+}
+
+// ── Load all data ─────────────────────────────────────────────────
+async function loadAll() {
+  await Promise.all([loadApplications(), loadInvestors(), loadContacts()]);
+}
+
+async function loadApplications() {
+  try {
+    var r = await fetch(CU29_API + '/api/admin/applications', { credentials: 'include' });
+    var d = await r.json();
+    _data.applications = d.applications || [];
+    updateStats();
+    renderApplications();
+  } catch (e) {
+    document.getElementById('list-applications').innerHTML = '<div class="empty"><div class="empty-icon">⚠</div><div class="empty-text">Failed to load — ' + e.message + '</div></div>';
+  }
+}
+
+async function loadInvestors() {
+  try {
+    var r = await fetch(CU29_API + '/api/admin/investors', { credentials: 'include' });
+    var d = await r.json();
+    _data.investors = d.investors || [];
+    updateStats();
+    renderInvestors();
+  } catch (e) {
+    document.getElementById('list-investors').innerHTML = '<div class="empty"><div class="empty-icon">⚠</div><div class="empty-text">Failed to load — ' + e.message + '</div></div>';
+  }
+}
+
+async function loadContacts() {
+  try {
+    var r = await fetch(CU29_API + '/api/admin/contacts', { credentials: 'include' });
+    var d = await r.json();
+    _data.contacts = d.contacts || [];
+    updateStats();
+    renderContacts();
+  } catch (e) {
+    document.getElementById('list-contacts').innerHTML = '<div class="empty"><div class="empty-icon">⚠</div><div class="empty-text">Failed to load — ' + e.message + '</div></div>';
+  }
+}
+
+// ── Stats ─────────────────────────────────────────────────────────
+function updateStats() {
+  var pending = _data.investors.filter(function(i) { return i.approved === 'pending'; }).length;
+  var approved = _data.investors.filter(function(i) { return i.approved === 'approved' || i.approved === ''; }).length;
+  document.getElementById('stat-pending').textContent = pending;
+  document.getElementById('stat-investors').textContent = _data.investors.length;
+  document.getElementById('stat-approved').textContent = approved;
+  document.getElementById('stat-contacts').textContent = _data.contacts.length;
+  document.getElementById('tbadge-applications').textContent = _data.applications.length;
+  document.getElementById('tbadge-investors').textContent = _data.investors.length;
+  document.getElementById('tbadge-contacts').textContent = _data.contacts.length;
+}
+
+// ── Approve / Reject ──────────────────────────────────────────────
+async function setApproved(email, status, btn) {
+  btn.disabled = true;
+  btn.textContent = '…';
+  try {
+    var d = await apiPost('/api/admin/approve', { email: email, status: status });
+    if (d.success) {
+      toast(email + ' → ' + status, 'success');
+      // update local data
+      _data.investors = _data.investors.map(function(inv) {
+        return inv.email === email ? Object.assign({}, inv, { approved: status }) : inv;
+      });
+      updateStats();
+      renderInvestors();
+    } else {
+      toast(d.error || 'Update failed', 'error');
+      btn.disabled = false;
+      btn.textContent = status === 'approved' ? 'Approve' : 'Reject';
+    }
+  } catch (e) {
+    toast('Error: ' + e.message, 'error');
+    btn.disabled = false;
+  }
+}
+
+// ── Renderers ─────────────────────────────────────────────────────
+function initials(name) {
+  return (name || '?').split(' ').slice(0, 2).map(function(w) { return w[0]; }).join('').toUpperCase();
+}
+
+function badgeHtml(approved) {
+  if (approved === 'approved') return '<span class="badge badge-approved">Approved</span>';
+  if (approved === 'rejected') return '<span class="badge badge-rejected">Rejected</span>';
+  if (approved === 'pending')  return '<span class="badge badge-pending">Pending</span>';
+  return '<span class="badge badge-legacy">Legacy</span>';
+}
+
+function approveButtons(email, currentStatus) {
+  var html = '<div class="card-actions">';
+  if (currentStatus !== 'approved') {
+    html += '<button class="btn btn-approve" onclick="event.stopPropagation();setApproved(\'' + esc(email) + '\',\'approved\',this)">Approve</button>';
+  }
+  if (currentStatus !== 'rejected') {
+    html += '<button class="btn btn-reject" onclick="event.stopPropagation();setApproved(\'' + esc(email) + '\',\'rejected\',this)">Reject</button>';
+  }
+  if (currentStatus === 'approved' || currentStatus === 'rejected') {
+    html += '<button class="btn btn-pending" onclick="event.stopPropagation();setApproved(\'' + esc(email) + '\',\'pending\',this)">Reset</button>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function esc(s) { return String(s).replace(/'/g, "\\'"); }
+function escHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function field(label, value) {
+  if (!value) return '';
+  return '<div class="card-field"><div class="card-field-label">' + escHtml(label) + '</div><div class="card-field-value">' + escHtml(value) + '</div></div>';
+}
+
+function renderApplications() {
+  var search = (document.getElementById('search-applications').value || '').toLowerCase();
+  var filter = document.getElementById('filter-applications').value;
+
+  // Match applications to investor approved status
+  var items = _data.applications.filter(function(a) {
+    var investor = _data.investors.find(function(i) { return i.email.toLowerCase() === a.email.toLowerCase(); });
+    var status = investor ? (investor.approved || '') : 'pending';
+    if (filter !== 'all' && status !== filter) return false;
+    if (search && !(a.name.toLowerCase().includes(search) || a.email.toLowerCase().includes(search))) return false;
+    return true;
+  });
+
+  var el = document.getElementById('list-applications');
+  if (items.length === 0) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">No applications found</div></div>';
+    return;
+  }
+
+  el.innerHTML = items.map(function(a, idx) {
+    var investor = _data.investors.find(function(i) { return i.email.toLowerCase() === a.email.toLowerCase(); });
+    var status = investor ? (investor.approved || '') : 'pending';
+    return '<div class="card" id="app-card-' + idx + '">' +
+      '<div class="card-header" onclick="toggleCard(\'app-card-' + idx + '\')">' +
+        '<div class="card-avatar">' + escHtml(initials(a.name)) + '</div>' +
+        '<div class="card-main">' +
+          '<div class="card-name">' + escHtml(a.name) + '</div>' +
+          '<div class="card-email">' + escHtml(a.email) + '</div>' +
+        '</div>' +
+        '<div class="card-meta">' +
+          '<span class="card-date">' + escHtml(a.date) + '</span>' +
+          badgeHtml(status) +
+          (investor ? approveButtons(a.email, status) : '') +
+          '<span class="card-chevron">▾</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="card-body">' +
+        '<div class="card-grid">' +
+          field('Country', a.country) + field('Nationality', a.nationality) +
+          field('DOB', a.dob) + field('Phone', a.phone) +
+          field('Investor Type', a.investorType) + field('Capital', a.capital) +
+          field('Horizon', a.horizon) + field('Risk', a.risk) +
+          field('Experience', a.experience) + field('Expected Return', a.expectedReturn) +
+          field('Source of Funds', a.sourceOfFunds) + field('PEP', a.pep) +
+          field('History', a.history) + field('Interests', a.interests) +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function renderInvestors() {
+  var search = (document.getElementById('search-investors').value || '').toLowerCase();
+  var filter = document.getElementById('filter-investors').value;
+
+  var items = _data.investors.filter(function(i) {
+    if (filter !== 'all' && i.approved !== filter) return false;
+    if (search && !(i.name.toLowerCase().includes(search) || i.email.toLowerCase().includes(search))) return false;
+    return true;
+  });
+
+  var el = document.getElementById('list-investors');
+  if (items.length === 0) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">👥</div><div class="empty-text">No investors found</div></div>';
+    return;
+  }
+
+  el.innerHTML = items.map(function(inv, idx) {
+    return '<div class="card" id="inv-card-' + idx + '">' +
+      '<div class="card-header" onclick="toggleCard(\'inv-card-' + idx + '\')">' +
+        '<div class="card-avatar">' + escHtml(initials(inv.name)) + '</div>' +
+        '<div class="card-main">' +
+          '<div class="card-name">' + escHtml(inv.name) + '</div>' +
+          '<div class="card-email">' + escHtml(inv.email) + '</div>' +
+        '</div>' +
+        '<div class="card-meta">' +
+          (inv.has2FA ? '<span class="badge badge-2fa">2FA ✓</span>' : '') +
+          badgeHtml(inv.approved) +
+          approveButtons(inv.email, inv.approved) +
+          '<span class="card-chevron">▾</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="card-body">' +
+        '<div class="card-grid">' +
+          field('Phone', inv.phone) + field('Role', inv.role) +
+          field('Registered', inv.date) + field('Notes', inv.notes) +
+          field('2FA', inv.has2FA ? 'Enabled' : 'Not set') +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function renderContacts() {
+  var search = (document.getElementById('search-contacts').value || '').toLowerCase();
+  var filter = document.getElementById('filter-contacts').value;
+
+  var items = _data.contacts.filter(function(c) {
+    if (filter !== 'all' && c.department !== filter) return false;
+    if (search && !(c.name.toLowerCase().includes(search) || c.email.toLowerCase().includes(search) || (c.subject||'').toLowerCase().includes(search))) return false;
+    return true;
+  });
+
+  // Reverse to show newest first
+  items = items.slice().reverse();
+
+  var el = document.getElementById('list-contacts');
+  if (items.length === 0) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">✉</div><div class="empty-text">No contact messages found</div></div>';
+    return;
+  }
+
+  el.innerHTML = items.map(function(c, idx) {
+    return '<div class="card" id="con-card-' + idx + '">' +
+      '<div class="card-header" onclick="toggleCard(\'con-card-' + idx + '\')">' +
+        '<div class="card-avatar">' + escHtml(initials(c.name)) + '</div>' +
+        '<div class="card-main">' +
+          '<div class="card-name">' + escHtml(c.subject || '(No subject)') + '</div>' +
+          '<div class="card-email">' + escHtml(c.name) + ' · ' + escHtml(c.email) + '</div>' +
+        '</div>' +
+        '<div class="card-meta">' +
+          '<span class="card-date">' + escHtml(c.date) + '</span>' +
+          '<span class="badge badge-legacy">' + escHtml(c.department || 'General') + '</span>' +
+          '<span class="card-chevron">▾</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="card-body">' +
+        '<div class="card-grid">' +
+          field('From', c.name) + field('Email', c.email) +
+          field('Phone', c.phone) + field('Department', c.department) +
+        '</div>' +
+        '<div class="card-message">' + escHtml(c.message) + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// ── UI helpers ────────────────────────────────────────────────────
+function toggleCard(id) {
+  var card = document.getElementById(id);
+  if (card) card.classList.toggle('expanded');
+}
+
+function filterCards(tab) {
+  if (tab === 'applications') renderApplications();
+  else if (tab === 'investors') renderInvestors();
+  else if (tab === 'contacts') renderContacts();
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('.content').forEach(function(c) { c.classList.remove('active'); });
+  document.getElementById('tab-btn-' + tab).classList.add('active');
+  document.getElementById('content-' + tab).classList.add('active');
+}
+
+function toast(msg, type) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + (type || 'success');
+  clearTimeout(el._t);
+  el._t = setTimeout(function() { el.classList.remove('show'); }, 3000);
+}
+
+function signOut() {
+  localStorage.removeItem('cu29_session');
+  fetch(CU29_API + '/api/logout', { method: 'POST', credentials: 'include' });
+  window.location.href = 'signin.html';
+}
+
+// ── Boot ──────────────────────────────────────────────────────────
+checkAuth();
+</script>
+</body>
+</html>

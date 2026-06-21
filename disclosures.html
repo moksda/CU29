@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
@@ -46,11 +46,11 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:76px;
 .sep{width:1px;height:18px;background:var(--border)}
 .btn-investor{font-size:.67rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
   text-decoration:none;padding:10px 20px;border:1.5px solid var(--copper);color:var(--copper-pale);
-  position:relative;overflow:hidden;transition:color .3s}
+  position:relative;overflow:hidden;transition:color .3s,transform .2s,box-shadow .2s}
 .btn-investor::before{content:'';position:absolute;inset:0;
   background:linear-gradient(135deg,var(--copper-lo),var(--copper));
   transform:scaleX(0);transform-origin:left;transition:transform .35s ease}
-.btn-investor:hover{color:#fff}
+.btn-investor:hover{color:#fff;transform:translateY(-2px);box-shadow:0 12px 36px rgba(200,121,58,.4)}
 .btn-investor:hover::before{transform:scaleX(1)}
 .btn-investor span{position:relative;z-index:1}
 /* page wrapper */
@@ -85,8 +85,8 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:76px;
 /* contact info cards */
 .contact-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.5px;
   background:var(--border);margin:2rem 0}
-.contact-card{background:var(--teal-card);padding:2rem;transition:background .3s}
-.contact-card:hover{background:var(--teal-light)}
+.contact-card{background:var(--teal-card);padding:2rem;transition:background .3s,transform .35s cubic-bezier(.34,1.2,.64,1),box-shadow .35s ease}
+.contact-card:hover{background:var(--teal-light);transform:translateY(-4px);box-shadow:0 16px 48px rgba(0,0,0,.18)}
 .contact-card h3{font-size:.75rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
   color:var(--copper);margin-bottom:1rem}
 .contact-card ul{list-style:none;padding:0}
@@ -114,9 +114,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:76px;
 .check-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.3rem}
 .btn-submit{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
   padding:16px 48px;background:linear-gradient(135deg,var(--copper),var(--copper-lo));
-  color:#fff;border:none;cursor:pointer;transition:opacity .3s;margin-top:1.5rem;
+  color:#fff;border:none;cursor:pointer;transition:opacity .3s,transform .2s,box-shadow .2s;margin-top:1.5rem;
   box-shadow:0 8px 32px rgba(200,121,58,.3)}
-.btn-submit:hover{opacity:.85}
+.btn-submit:hover{opacity:.92;transform:translateY(-2px);box-shadow:0 20px 48px rgba(200,121,58,.5)}
 /* sign in */
 .signin-wrap{max-width:480px;margin:4rem auto;padding:0 2rem}
 .signin-box{background:var(--teal-card);border:1px solid var(--border);padding:3rem}
@@ -178,10 +178,10 @@ nav{animation:slideDown .7s ease both}
   color:var(--text-dim);margin-top:.5rem;display:block}
 /* cards */
 .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5px;background:var(--border)}
-.card{background:var(--teal-card);padding:2.5rem 2rem;position:relative;overflow:hidden;transition:background .3s}
+.card{background:var(--teal-card);padding:2.5rem 2rem;position:relative;overflow:hidden;transition:background .3s,transform .4s cubic-bezier(.34,1.2,.64,1),box-shadow .4s ease}
 .card::after{content:'';position:absolute;bottom:0;left:0;width:0;height:2px;
   background:linear-gradient(90deg,var(--copper-lo),var(--copper-pale));transition:width .5s ease}
-.card:hover{background:var(--teal-light)}
+.card:hover{background:var(--teal-light);transform:translateY(-6px);box-shadow:0 24px 64px rgba(0,0,0,.22),0 0 0 1px rgba(200,121,58,.15)}
 .card:hover::after{width:100%}
 .card-num{font-family:'Bebas Neue',sans-serif;font-size:2.5rem;color:rgba(200,121,58,.1);
   position:absolute;top:1.2rem;right:1.5rem;pointer-events:none}
@@ -191,7 +191,7 @@ nav{animation:slideDown .7s ease both}
 .card-link{display:inline-flex;align-items:center;gap:6px;margin-top:1.2rem;
   font-size:.62rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
   text-decoration:none;color:var(--copper);transition:gap .2s;border:none}
-.card-link:hover{gap:10px}
+.card-link:hover{gap:12px;color:var(--copper-pale)}
 @media(max-width:960px){
   .nav-links{display:none}
   footer{grid-template-columns:1fr 1fr}
@@ -201,6 +201,11 @@ nav{animation:slideDown .7s ease both}
   .form-grid{grid-template-columns:1fr}
   .form-group.full{grid-column:1}
 }
+.btn-investor:active,.btn-submit:active{transform:translateY(0)!important;transition-duration:.05s}
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .55s ease,transform .55s cubic-bezier(.34,1.1,.64,1)}
+.reveal.visible{opacity:1;transform:none}
+.reveal-d1{transition-delay:.1s}
+.reveal-d2{transition-delay:.2s}
 </style>
 </head>
 <body>
@@ -254,7 +259,7 @@ nav{animation:slideDown .7s ease both}
       var badge=document.getElementById('nav-user-badge');
       var si=document.querySelector('.btn-signin');
       var sep=document.querySelector('.nav-user .sep');
-      if(badge)badge.textContent=prefix+' · '+first;
+      if(badge){badge.textContent=prefix+' · '+first;if(s.role==='admin')badge.href='admin.html';}
       if(info)info.style.display='flex';
       if(si)si.style.display='none';
       if(sep)sep.style.display='none';
@@ -345,4 +350,29 @@ function cu29SignOut(){
 })();
 </script></body>
 <div id="cu29-age-gate" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:1rem"><div style="background:#012E32;border:1px solid rgba(200,121,58,.3);padding:2.5rem 2rem;max-width:420px;width:100%;text-align:center;box-shadow:0 32px 80px rgba(0,0,0,.6)"><div style="font-family:'Bebas Neue',cursive;font-size:2.2rem;background:linear-gradient(135deg,#F0C08A,#C8793A);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.2rem">InvestCu29</div><p style="font-size:.55rem;letter-spacing:.25em;text-transform:uppercase;color:#8BB5B0;margin-bottom:2rem">Age Verification</p><div id="cu29-age-q"><h2 style="font-family:'Bebas Neue',cursive;font-size:1.5rem;color:#EAE0D4;margin-bottom:.8rem">Are you 13 or older?</h2><p style="color:#8BB5B0;font-size:.78rem;line-height:1.7;margin-bottom:1.8rem">This site collects personal and financial data for investment purposes. You must be at least 13 years old to continue.</p><div style="display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap"><button onclick="cu29Yes()" style="padding:11px 24px;background:linear-gradient(135deg,#C8793A,#A05E2A);border:none;color:#fff;font-family:'Montserrat',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;cursor:pointer">Yes, I'm 13 or older</button><button onclick="cu29No()" style="padding:11px 24px;background:transparent;border:1.5px solid rgba(180,120,60,.35);color:#8BB5B0;font-family:'Montserrat',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;cursor:pointer">No, I'm under 13</button></div></div><div id="cu29-age-denied" style="display:none"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#C8793A" stroke-width="1.4" style="margin-bottom:1rem"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg><h2 style="font-family:'Bebas Neue',cursive;font-size:1.5rem;color:#EAE0D4;margin-bottom:.8rem">Access Denied</h2><p style="color:#8BB5B0;font-size:.78rem;line-height:1.7">This website is not available to users under 13. We do not collect personal data from children. Please close this page.</p></div></div></div><script>(function(){function getCookie(n){var m=document.cookie.match('(^|;)\s*'+n+'\s*=\s*([^;]+)');return m?m.pop():null}function setCookie(n,v,d){var e=new Date();e.setTime(e.getTime()+d*86400000);document.cookie=n+'='+v+';expires='+e.toUTCString()+';path=/;SameSite=Lax'}var g=document.getElementById('cu29-age-gate');if(!getCookie('cu29_age_ok'))g.style.display='flex';window.cu29Yes=function(){setCookie('cu29_age_ok','1',365);g.style.display='none'};window.cu29No=function(){document.getElementById('cu29-age-q').style.display='none';document.getElementById('cu29-age-denied').style.display='block';document.body.style.overflow='hidden'};})();</script>
+<script>
+(function(){
+  if('IntersectionObserver' in window){
+    var obs=new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}
+      });
+    },{threshold:0.08,rootMargin:'0px 0px -32px 0px'});
+    document.querySelectorAll('.card,.stat,.contact-card,.faq-item').forEach(function(el,i){
+      el.classList.add('reveal');
+      if(i%3===1)el.classList.add('reveal-d1');
+      if(i%3===2)el.classList.add('reveal-d2');
+      obs.observe(el);
+    });
+  }
+  document.querySelectorAll('.btn-submit,.btn-investor').forEach(function(btn){
+    btn.addEventListener('click',function(e){
+      var r=document.createElement('span'),rect=this.getBoundingClientRect();
+      r.style.cssText='pointer-events:none;position:absolute;border-radius:50%;background:rgba(255,255,255,.22);width:120px;height:120px;margin:-60px 0 0 -60px;left:'+(e.clientX-rect.left)+'px;top:'+(e.clientY-rect.top)+'px;transform:scale(0);animation:_ripple .55s ease-out forwards';
+      this.appendChild(r);setTimeout(function(){r.remove()},600);
+    });
+  });
+})();
+</script>
+<style>@keyframes _ripple{to{transform:scale(4);opacity:0}}</style>
 </html>

@@ -18,6 +18,12 @@ function doGet(e) {
     result = handleLogin(e.parameter.email, e.parameter.password);
   } else if (action === 'market_data') {
     result = handleGetMarketData();
+  } else if (action === 'admin_applications') {
+    result = getAdminApplications();
+  } else if (action === 'admin_investors') {
+    result = getAdminInvestors();
+  } else if (action === 'admin_contacts') {
+    result = getAdminContacts();
   } else {
     result = { error: 'unknown action' };
   }
@@ -40,6 +46,9 @@ function doPost(e) {
     }
     if (p.action === 'save_2fa_secret') {
       return ContentService.createTextOutput(JSON.stringify(save2FASecret(p.email, p.secret || ''))).setMimeType(ContentService.MimeType.JSON);
+    }
+    if (p.action === 'set_approved') {
+      return ContentService.createTextOutput(JSON.stringify(setApproved(p.email, p.status))).setMimeType(ContentService.MimeType.JSON);
     }
     return ContentService.createTextOutput(JSON.stringify({ success: false, error: 'unknown action' })).setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
@@ -148,10 +157,101 @@ function handleLogin(email, password) {
       role: row[3] || 'investor',
       email: row[1],
       hash: String(row[2] || ''),
-      twoFASecret: row[7] ? String(row[7]) : null
+      twoFASecret: row[7] ? String(row[7]) : null,
+      approved: String(row[8] || '')  // blank = legacy account = treated as approved by server
     };
   }
   return { success: false };
+}
+
+// ── Admin data functions ──────────────────────────────────────────
+
+function getAdminInvestors() {
+  var rows = getAccountsSheet().getDataRange().getValues();
+  var investors = [];
+  for (var i = 1; i < rows.length; i++) {
+    var r = rows[i];
+    if (!r[1]) continue;
+    investors.push({
+      name:     String(r[0] || ''),
+      email:    String(r[1] || ''),
+      role:     String(r[3] || 'investor'),
+      phone:    String(r[4] || ''),
+      notes:    String(r[5] || ''),
+      date:     r[6] ? Utilities.formatDate(new Date(r[6]), Session.getScriptTimeZone(), 'dd MMM yyyy') : '',
+      has2FA:   !!r[7],
+      approved: String(r[8] || '')
+    });
+  }
+  return { success: true, investors: investors };
+}
+
+function getAdminApplications() {
+  var ss = SpreadsheetApp.openById(ACCOUNTS_SHEET_ID);
+  var sheet = ss.getSheetByName('Investor Applications');
+  if (!sheet) return { success: true, applications: [] };
+  var rows = sheet.getDataRange().getValues();
+  var applications = [];
+  for (var i = 1; i < rows.length; i++) {
+    var r = rows[i];
+    if (!r[2]) continue;
+    applications.push({
+      date:          r[0] ? Utilities.formatDate(new Date(r[0]), Session.getScriptTimeZone(), 'dd MMM yyyy') : '',
+      name:          String(r[1] || ''),
+      email:         String(r[2] || ''),
+      phone:         String(r[3] || ''),
+      dob:           String(r[4] || ''),
+      nationality:   String(r[5] || ''),
+      country:       String(r[6] || ''),
+      investorType:  String(r[7] || ''),
+      experience:    String(r[8] || ''),
+      history:       String(r[9] || ''),
+      capital:       String(r[10] || ''),
+      horizon:       String(r[11] || ''),
+      interests:     String(r[12] || ''),
+      risk:          String(r[13] || ''),
+      expectedReturn:String(r[14] || ''),
+      sourceOfFunds: String(r[15] || ''),
+      pep:           String(r[16] || '')
+    });
+  }
+  return { success: true, applications: applications };
+}
+
+function getAdminContacts() {
+  var ss = SpreadsheetApp.openById(ACCOUNTS_SHEET_ID);
+  var sheet = ss.getSheetByName('Contact Submissions');
+  if (!sheet) return { success: true, contacts: [] };
+  var rows = sheet.getDataRange().getValues();
+  var contacts = [];
+  for (var i = 1; i < rows.length; i++) {
+    var r = rows[i];
+    if (!r[2]) continue;
+    contacts.push({
+      date:       r[0] ? Utilities.formatDate(new Date(r[0]), Session.getScriptTimeZone(), 'dd MMM yyyy HH:mm') : '',
+      name:       String(r[1] || ''),
+      email:      String(r[2] || ''),
+      phone:      String(r[3] || ''),
+      department: String(r[4] || ''),
+      subject:    String(r[5] || ''),
+      message:    String(r[6] || '')
+    });
+  }
+  return { success: true, contacts: contacts };
+}
+
+function setApproved(email, status) {
+  email = email.trim().toLowerCase();
+  var sheet = getAccountsSheet();
+  var rows = sheet.getDataRange().getValues();
+  for (var i = 1; i < rows.length; i++) {
+    var rowEmail = String(rows[i][1] || '').trim().toLowerCase();
+    if (rowEmail === email) {
+      sheet.getRange(i + 1, 9).setValue(status); // Column I = 9 (1-based)
+      return { success: true };
+    }
+  }
+  return { success: false, error: 'User not found' };
 }
 
 function save2FASecret(email, secret) {
@@ -203,7 +303,7 @@ function applyInvestor(p) {
   var phone = safeText(p.phone);
 
   var accounts = getAccountsSheet();
-  accounts.appendRow([name, email, p.password, 'investor', phone, 'Investor application', new Date()]);
+  accounts.appendRow([name, email, p.password, 'investor', phone, 'Investor application', new Date(), '', 'pending']);
 
   var ss = SpreadsheetApp.openById(ACCOUNTS_SHEET_ID);
   var appSheet = ss.getSheetByName('Investor Applications');

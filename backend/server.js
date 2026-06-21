@@ -115,6 +115,14 @@ const twoFALimiter = rateLimit({
 
 app.use('/api/', globalLimiter);
 
+// ── Admin guard ───────────────────────────────────────────────────
+function requireAdmin(req, res, next) {
+  if (!req.session.user || req.session.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  next();
+}
+
 // ── Input sanitisation helpers ────────────────────────────────────
 function failValidation(req, res) {
   const errors = validationResult(req);
@@ -212,6 +220,15 @@ app.post('/api/login',
       const passwordMatch = await bcrypt.compare(password, data.hash);
       if (!passwordMatch) return res.status(401).json({ success: false, error: 'Invalid credentials' });
 
+      // Blank approved = legacy account created before approval gate → allow in
+      const approved = data.approved || 'approved';
+      if (approved === 'rejected') {
+        return res.status(403).json({ success: false, error: 'Your application has been rejected. Contact us for more information.' });
+      }
+      if (approved === 'pending') {
+        return res.status(403).json({ success: false, error: 'Your account is pending admin approval. You will be notified once reviewed.' });
+      }
+
       const investorUser = { name: data.name, role: data.role || 'investor', email: data.email, twoFASecret: data.twoFASecret || null };
 
       // If investor has 2FA enabled, require TOTP before granting session
@@ -233,6 +250,61 @@ app.post('/api/login',
 app.post('/api/logout', (req, res) => {
   req.session.destroy(() => res.json({ success: true }));
 });
+
+// ── Current session info ──────────────────────────────────────────
+app.get('/api/me', (req, res) => {
+  if (!req.session.user) return res.json({ authenticated: false });
+  res.json({ authenticated: true, name: req.session.user.name, role: req.session.user.role });
+});
+
+// ── Admin: list applications ──────────────────────────────────────
+app.get('/api/admin/applications', requireAdmin, async (req, res) => {
+  try {
+    const data = await callAppsScript({ action: 'admin_applications' }, 'GET');
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ── Admin: list investors ─────────────────────────────────────────
+app.get('/api/admin/investors', requireAdmin, async (req, res) => {
+  try {
+    const data = await callAppsScript({ action: 'admin_investors' }, 'GET');
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ── Admin: list contact submissions ──────────────────────────────
+app.get('/api/admin/contacts', requireAdmin, async (req, res) => {
+  try {
+    const data = await callAppsScript({ action: 'admin_contacts' }, 'GET');
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ── Admin: set investor approved status ───────────────────────────
+app.post('/api/admin/approve',
+  requireAdmin,
+  csrfProtection,
+  [
+    body('email').isEmail().normalizeEmail({ gmail_remove_dots: false, gmail_remove_subaddress: false }),
+    body('status').isIn(['approved', 'rejected', 'pending'])
+  ],
+  async (req, res) => {
+    if (failValidation(req, res)) return;
+    try {
+      const data = await callAppsScript({ action: 'set_approved', email: req.body.email, status: req.body.status });
+      res.json(data);
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  }
+);
 
 // ── 2FA: Complete login after TOTP check ──────────────────────────
 app.post('/api/2fa/complete',

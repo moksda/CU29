@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
@@ -262,7 +262,7 @@ nav{animation:slideDown .7s ease both}
       var badge=document.getElementById('nav-user-badge');
       var si=document.querySelector('.btn-signin');
       var sep=document.querySelector('.nav-user .sep');
-      if(badge)badge.textContent=prefix+' · '+first;
+      if(badge){badge.textContent=prefix+' · '+first;if(s.role==='admin')badge.href='admin.html';}
       if(info)info.style.display='flex';
       if(si)si.style.display='none';
       if(sep)sep.style.display='none';
