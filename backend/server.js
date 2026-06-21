@@ -72,12 +72,13 @@ app.use(session({
 }));
 
 // ── CSRF ──────────────────────────────────────────────────────────
-const { generateToken, doubleCsrfProtection } = doubleCsrf({
+const { generateCsrfToken, doubleCsrfProtection } = doubleCsrf({
   getSecret: () => process.env.SESSION_SECRET,
-  cookieName: '__Host-psifi.x-csrf-token',
+  getSessionIdentifier: (req) => req.session?.id || '',
+  cookieName: PROD ? '__Host-psifi.x-csrf-token' : 'psifi.x-csrf-token',
   cookieOptions: { secure: PROD, sameSite: 'strict', httpOnly: true },
   size: 64,
-  getTokenFromRequest: (req) => req.headers['x-csrf-token'] || req.body?._csrf
+  getCsrfTokenFromRequest: (req) => req.headers['x-csrf-token'] || req.body?._csrf
 });
 const csrfProtection = doubleCsrfProtection;
 
@@ -156,7 +157,7 @@ async function callAppsScript(params, method = 'POST') {
 
 // CSRF token — fetch this before submitting any form
 app.get('/api/csrf-token', (req, res) => {
-  res.json({ csrfToken: generateToken(req, res) });
+  res.json({ csrfToken: generateCsrfToken(req, res) });
 });
 
 // ── Login ─────────────────────────────────────────────────────────
