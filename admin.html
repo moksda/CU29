@@ -393,6 +393,7 @@ async function setApproved(email, status, btn) {
   btn.textContent = '…';
   try {
     var d = await apiPost('/api/admin/approve', { email: email, status: status });
+    if (!d) { toast('No response from server', 'error'); btn.disabled = false; btn.textContent = status; return; }
     if (d.success) {
       toast(email + ' → ' + status, 'success');
       if (status === 'rejected') {
@@ -411,13 +412,14 @@ async function setApproved(email, status, btn) {
       renderInvestors();
       renderApplications();
     } else {
-      toast(d.error || 'Update failed', 'error');
+      toast(d.error || d.errors?.[0] || 'Update failed', 'error');
       btn.disabled = false;
-      btn.textContent = status === 'approved' ? 'Approve' : 'Reject';
+      btn.textContent = status === 'approved' ? 'Approve' : status === 'rejected' ? 'Reject' : 'Reset';
     }
   } catch (e) {
     toast('Error: ' + e.message, 'error');
     btn.disabled = false;
+    btn.textContent = status;
   }
 }
 
@@ -434,18 +436,25 @@ function badgeHtml(approved) {
 }
 
 function approveButtons(email, currentStatus) {
-  var html = '<div class="card-actions">';
+  var e = escHtml(email);
+  var html = '<div class="card-actions" onclick="event.stopPropagation()">';
   if (currentStatus !== 'approved') {
-    html += '<button class="btn btn-approve" onclick="event.stopPropagation();setApproved(\'' + esc(email) + '\',\'approved\',this)">Approve</button>';
+    html += '<button class="btn btn-approve" data-email="' + e + '" data-status="approved" onclick="handleApproveBtn(this)">Approve</button>';
   }
   if (currentStatus !== 'rejected') {
-    html += '<button class="btn btn-reject" onclick="event.stopPropagation();setApproved(\'' + esc(email) + '\',\'rejected\',this)">Reject</button>';
+    html += '<button class="btn btn-reject" data-email="' + e + '" data-status="rejected" onclick="handleApproveBtn(this)">Reject</button>';
   }
   if (currentStatus === 'approved' || currentStatus === 'rejected') {
-    html += '<button class="btn btn-pending" onclick="event.stopPropagation();setApproved(\'' + esc(email) + '\',\'pending\',this)">Reset</button>';
+    html += '<button class="btn btn-pending" data-email="' + e + '" data-status="pending" onclick="handleApproveBtn(this)">Reset</button>';
   }
   html += '</div>';
   return html;
+}
+
+function handleApproveBtn(btn) {
+  var email = btn.getAttribute('data-email');
+  var status = btn.getAttribute('data-status');
+  setApproved(email, status, btn);
 }
 
 function esc(s) { return String(s).replace(/'/g, "\\'"); }
@@ -491,7 +500,7 @@ function renderApplications() {
         '<div class="card-meta">' +
           '<span class="card-date">' + escHtml(a.date) + (status === 'rejected' ? '<span style="color:var(--red);font-size:.58rem;margin-left:6px">' + escHtml(countdown(a.email)) + '</span>' : '') + '</span>' +
           badgeHtml(status) +
-          (investor ? approveButtons(a.email, status) : '') +
+          approveButtons(a.email, status) +
           '<span class="card-chevron">▾</span>' +
         '</div>' +
       '</div>' +
