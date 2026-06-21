@@ -667,6 +667,9 @@ async function doSignIn(){
       return;
     }
     btn.textContent='Signing in…';
+    var remember=document.getElementById('si-remember')&&document.getElementById('si-remember').checked;
+    var exp=Date.now()+(remember?30*24*60*60*1000:30*60*1000);
+    localStorage.setItem('cu29_session',JSON.stringify({name:data.name||'User',role:data.role||'investor',exp:exp}));
     window.location.href='invest.html';
   } catch(e){
     console.error('[doSignIn] error',e);
@@ -693,6 +696,9 @@ async function doVerifyOTP(){
       return;
     }
     btn.textContent='Verified!';
+    var remember2=document.getElementById('si-remember')&&document.getElementById('si-remember').checked;
+    var exp2=Date.now()+(remember2?30*24*60*60*1000:30*60*1000);
+    localStorage.setItem('cu29_session',JSON.stringify({name:data.name||'User',role:data.role||'investor',exp:exp2}));
     setTimeout(function(){window.location.href='invest.html';},600);
   } catch(e){
     btn.disabled=false;btn.textContent='Verify Code';
