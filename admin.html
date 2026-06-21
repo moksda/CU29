@@ -258,6 +258,38 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:64px;
 var CU29_API = '';
 var _csrfToken = null;
 var _data = { applications: [], investors: [], contacts: [] };
+var _rejectedAt = JSON.parse(localStorage.getItem('cu29_rejected_at') || '{}');
+var _countdownTimer = null;
+
+function saveRejectedAt() {
+  localStorage.setItem('cu29_rejected_at', JSON.stringify(_rejectedAt));
+}
+
+function isHidden(email) {
+  var t = _rejectedAt[email];
+  if (t === undefined) return true;          // rejected before feature → already gone
+  return Date.now() - t >= 5 * 60 * 1000;   // 5 minutes elapsed → gone
+}
+
+function countdown(email) {
+  var t = _rejectedAt[email];
+  if (!t) return '';
+  var remaining = Math.max(0, 300 - Math.floor((Date.now() - t) / 1000));
+  if (remaining === 0) return '';
+  var m = Math.floor(remaining / 60), s = remaining % 60;
+  return ' · gone in ' + m + ':' + (s < 10 ? '0' : '') + s;
+}
+
+function startCountdownLoop() {
+  if (_countdownTimer) return;
+  _countdownTimer = setInterval(function() {
+    var anyActive = Object.keys(_rejectedAt).some(function(e) {
+      return Date.now() - _rejectedAt[e] < 5 * 60 * 1000;
+    });
+    renderApplications();
+    if (!anyActive) { clearInterval(_countdownTimer); _countdownTimer = null; }
+  }, 10000);
+}
 
 // ── CSRF + API helpers ────────────────────────────────────────────
 async function getCsrf() {
@@ -363,12 +395,21 @@ async function setApproved(email, status, btn) {
     var d = await apiPost('/api/admin/approve', { email: email, status: status });
     if (d.success) {
       toast(email + ' → ' + status, 'success');
-      // update local data
+      if (status === 'rejected') {
+        _rejectedAt[email] = Date.now();
+        saveRejectedAt();
+        setTimeout(function() { renderApplications(); }, 5 * 60 * 1000);
+        startCountdownLoop();
+      } else {
+        delete _rejectedAt[email];
+        saveRejectedAt();
+      }
       _data.investors = _data.investors.map(function(inv) {
         return inv.email === email ? Object.assign({}, inv, { approved: status }) : inv;
       });
       updateStats();
       renderInvestors();
+      renderApplications();
     } else {
       toast(d.error || 'Update failed', 'error');
       btn.disabled = false;
@@ -425,6 +466,7 @@ function renderApplications() {
   var items = _data.applications.filter(function(a) {
     var investor = _data.investors.find(function(i) { return i.email.toLowerCase() === a.email.toLowerCase(); });
     var status = investor ? (investor.approved || '') : 'pending';
+    if (status === 'rejected' && filter !== 'rejected' && isHidden(a.email)) return false;
     if (filter !== 'all' && status !== filter) return false;
     if (search && !(a.name.toLowerCase().includes(search) || a.email.toLowerCase().includes(search))) return false;
     return true;
@@ -447,7 +489,7 @@ function renderApplications() {
           '<div class="card-email">' + escHtml(a.email) + '</div>' +
         '</div>' +
         '<div class="card-meta">' +
-          '<span class="card-date">' + escHtml(a.date) + '</span>' +
+          '<span class="card-date">' + escHtml(a.date) + (status === 'rejected' ? '<span style="color:var(--red);font-size:.58rem;margin-left:6px">' + escHtml(countdown(a.email)) + '</span>' : '') + '</span>' +
           badgeHtml(status) +
           (investor ? approveButtons(a.email, status) : '') +
           '<span class="card-chevron">▾</span>' +
