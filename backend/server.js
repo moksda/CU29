@@ -173,7 +173,7 @@ app.post('/api/login',
   [
     body('email')
       .isEmail().withMessage('Valid email required')
-      .normalizeEmail(),
+      .normalizeEmail({ gmail_remove_dots: false, gmail_remove_subaddress: false }),
     body('password')
       .isLength({ min: 6, max: 128 }).withMessage('Password must be 6–128 characters')
   ],
