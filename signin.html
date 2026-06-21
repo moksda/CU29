@@ -647,11 +647,14 @@ async function doSignIn(){
   var pass=document.getElementById('si-password').value;
   var err=document.getElementById('si-error');
   var btn=document.getElementById('si-btn');
+  if(!err||!btn){console.error('[doSignIn] Missing elements',{err:err,btn:btn});return;}
   err.style.display='none';
   if(!email||!pass){err.textContent='Please enter your email and password.';err.style.display='block';return;}
   btn.disabled=true;btn.textContent='Checking…';
   try {
+    console.log('[doSignIn] fetching CSRF…');
     var data=await apiPost('/api/login',{email:email,password:pass});
+    console.log('[doSignIn] response',data);
     if(!data.success){
       btn.disabled=false;btn.textContent='Sign In';
       err.textContent=data.error||'Incorrect email or password.';err.style.display='block';
@@ -663,12 +666,12 @@ async function doSignIn(){
       showOTPPanel();
       return;
     }
-    // No 2FA — logged in
-    btn.textContent='Sign In';btn.disabled=false;
+    btn.textContent='Signing in…';
     window.location.href='invest.html';
   } catch(e){
+    console.error('[doSignIn] error',e);
     btn.disabled=false;btn.textContent='Sign In';
-    err.textContent='Could not reach the server. Check your connection and try again.';err.style.display='block';
+    err.textContent='Error: '+e.message;err.style.display='block';
   }
 }
 
