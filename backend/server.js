@@ -11,6 +11,7 @@ const speakeasy  = require('speakeasy');
 const QRCode     = require('qrcode');
 const { doubleCsrf } = require('csrf-csrf');
 const cookieParser = require('cookie-parser');
+const crypto       = require('crypto');
 
 const app  = express();
 const PORT = process.env.PORT || 3001;
@@ -183,12 +184,15 @@ app.post('/api/login',
       const { email, password } = req.body;
 
       const adminEmail = (process.env.ADMIN_EMAIL || '').toLowerCase();
-      console.log('[login] email:', email, '| adminEmail:', adminEmail, '| match:', email === adminEmail, '| hashSet:', !!process.env.ADMIN_PASSWORD_HASH);
 
-      // Admin — compared against bcrypt hash in .env, never hits the sheet
+      // Admin — timing-safe plain-text comparison using ADMIN_PASSWORD env var
       if (email === adminEmail) {
-        const ok = await bcrypt.compare(password, process.env.ADMIN_PASSWORD_HASH);
-        console.log('[login] bcrypt result:', ok);
+        const adminPwd = process.env.ADMIN_PASSWORD || '';
+        let ok = false;
+        try {
+          ok = adminPwd.length > 0 &&
+               crypto.timingSafeEqual(Buffer.from(password), Buffer.from(adminPwd));
+        } catch { ok = false; }
         if (!ok) return res.status(401).json({ success: false, error: 'Invalid credentials' });
         const adminUser = { name: 'Admin', role: 'admin', email };
         if (process.env.ADMIN_2FA_SECRET) {
