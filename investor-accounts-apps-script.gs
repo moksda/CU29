@@ -38,6 +38,9 @@ function doPost(e) {
     if (p.action === 'contact') {
       return ContentService.createTextOutput(JSON.stringify(handleContact(p))).setMimeType(ContentService.MimeType.JSON);
     }
+    if (p.action === 'save_2fa_secret') {
+      return ContentService.createTextOutput(JSON.stringify(save2FASecret(p.email, p.secret || ''))).setMimeType(ContentService.MimeType.JSON);
+    }
     return ContentService.createTextOutput(JSON.stringify({ success: false, error: 'unknown action' })).setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({ success: false, error: err.toString() })).setMimeType(ContentService.MimeType.JSON);
@@ -125,26 +128,44 @@ function getAccountsSheet() {
   return SpreadsheetApp.openById(ACCOUNTS_SHEET_ID).getSheets()[0];
 }
 
-// Server-side credential check. Only ever returns name/email/role for a
-// successful match — never the password, and never the full account list.
+// Server-side credential check. Only ever returns name/email/role/hash for a
+// successful match — never the full account list.
+// Columns: A=Name, B=Email, C=PasswordHash, D=Role, E=Phone, F=Notes, G=Date, H=2FASecret
 function handleLogin(email, password) {
   if (!email || !password) return { success: false };
   email = email.trim().toLowerCase();
 
   // Admin login is never handled here — the Node backend catches it first using bcrypt.
-  // This function only handles investor accounts whose passwords are bcrypt hashes.
   var rows = getAccountsSheet().getDataRange().getValues();
   for (var i = 1; i < rows.length; i++) {
     var row = rows[i];
     var rowEmail = String(row[1] || '').trim().toLowerCase();
-    var storedHash = String(row[2] || '');
     if (rowEmail !== email) continue;
-    // Verify bcrypt hash — bcrypt is not natively available in Apps Script,
-    // so we call a helper endpoint on the Node backend to do the comparison.
-    // For now return the hash so the Node backend can compare server-side.
-    return { success: true, name: row[0], role: row[3] || 'investor', email: row[1], hash: storedHash };
+    // Return hash + 2FA secret — Node backend does bcrypt.compare and TOTP verify server-side.
+    return {
+      success: true,
+      name: row[0],
+      role: row[3] || 'investor',
+      email: row[1],
+      hash: String(row[2] || ''),
+      twoFASecret: row[7] ? String(row[7]) : null
+    };
   }
   return { success: false };
+}
+
+function save2FASecret(email, secret) {
+  email = email.trim().toLowerCase();
+  var sheet = getAccountsSheet();
+  var rows = sheet.getDataRange().getValues();
+  for (var i = 1; i < rows.length; i++) {
+    var rowEmail = String(rows[i][1] || '').trim().toLowerCase();
+    if (rowEmail === email) {
+      sheet.getRange(i + 1, 8).setValue(secret); // column H = 2FASecret
+      return { success: true };
+    }
+  }
+  return { success: false, error: 'User not found' };
 }
 
 // Sheets auto-parses any cell value starting with +, -, or = as a formula

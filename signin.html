@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
@@ -46,11 +46,11 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:76px;
 .sep{width:1px;height:18px;background:var(--border)}
 .btn-investor{font-size:.67rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
   text-decoration:none;padding:10px 20px;border:1.5px solid var(--copper);color:var(--copper-pale);
-  position:relative;overflow:hidden;transition:color .3s}
+  position:relative;overflow:hidden;transition:color .3s,transform .2s,box-shadow .2s}
 .btn-investor::before{content:'';position:absolute;inset:0;
   background:linear-gradient(135deg,var(--copper-lo),var(--copper));
   transform:scaleX(0);transform-origin:left;transition:transform .35s ease}
-.btn-investor:hover{color:#fff}
+.btn-investor:hover{color:#fff;transform:translateY(-2px);box-shadow:0 12px 36px rgba(200,121,58,.4)}
 .btn-investor:hover::before{transform:scaleX(1)}
 .btn-investor span{position:relative;z-index:1}
 /* page wrapper */
@@ -85,8 +85,8 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:76px;
 /* contact info cards */
 .contact-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.5px;
   background:var(--border);margin:2rem 0}
-.contact-card{background:var(--teal-card);padding:2rem;transition:background .3s}
-.contact-card:hover{background:var(--teal-light)}
+.contact-card{background:var(--teal-card);padding:2rem;transition:background .3s,transform .35s cubic-bezier(.34,1.2,.64,1),box-shadow .35s ease}
+.contact-card:hover{background:var(--teal-light);transform:translateY(-4px);box-shadow:0 16px 48px rgba(0,0,0,.18)}
 .contact-card h3{font-size:.75rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
   color:var(--copper);margin-bottom:1rem}
 .contact-card ul{list-style:none;padding:0}
@@ -114,9 +114,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:76px;
 .check-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.3rem}
 .btn-submit{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
   padding:16px 48px;background:linear-gradient(135deg,var(--copper),var(--copper-lo));
-  color:#fff;border:none;cursor:pointer;transition:opacity .3s;margin-top:1.5rem;
+  color:#fff;border:none;cursor:pointer;transition:opacity .3s,transform .2s,box-shadow .2s;margin-top:1.5rem;
   box-shadow:0 8px 32px rgba(200,121,58,.3)}
-.btn-submit:hover{opacity:.85}
+.btn-submit:hover{opacity:.92;transform:translateY(-2px);box-shadow:0 20px 48px rgba(200,121,58,.5)}
 /* sign in */
 .signin-wrap{max-width:480px;margin:4rem auto;padding:0 2rem}
 .signin-box{background:var(--teal-card);border:1px solid var(--border);padding:3rem}
@@ -178,10 +178,10 @@ nav{animation:slideDown .7s ease both}
   color:var(--text-dim);margin-top:.5rem;display:block}
 /* cards */
 .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5px;background:var(--border)}
-.card{background:var(--teal-card);padding:2.5rem 2rem;position:relative;overflow:hidden;transition:background .3s}
+.card{background:var(--teal-card);padding:2.5rem 2rem;position:relative;overflow:hidden;transition:background .3s,transform .4s cubic-bezier(.34,1.2,.64,1),box-shadow .4s ease}
 .card::after{content:'';position:absolute;bottom:0;left:0;width:0;height:2px;
   background:linear-gradient(90deg,var(--copper-lo),var(--copper-pale));transition:width .5s ease}
-.card:hover{background:var(--teal-light)}
+.card:hover{background:var(--teal-light);transform:translateY(-6px);box-shadow:0 24px 64px rgba(0,0,0,.22),0 0 0 1px rgba(200,121,58,.15)}
 .card:hover::after{width:100%}
 .card-num{font-family:'Bebas Neue',sans-serif;font-size:2.5rem;color:rgba(200,121,58,.1);
   position:absolute;top:1.2rem;right:1.5rem;pointer-events:none}
@@ -191,7 +191,7 @@ nav{animation:slideDown .7s ease both}
 .card-link{display:inline-flex;align-items:center;gap:6px;margin-top:1.2rem;
   font-size:.62rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
   text-decoration:none;color:var(--copper);transition:gap .2s;border:none}
-.card-link:hover{gap:10px}
+.card-link:hover{gap:12px;color:var(--copper-pale)}
 @media(max-width:960px){
   .nav-links{display:none}
   footer{grid-template-columns:1fr 1fr}
@@ -201,11 +201,16 @@ nav{animation:slideDown .7s ease both}
   .form-grid{grid-template-columns:1fr}
   .form-group.full{grid-column:1}
 }
+.btn-investor:active,.btn-submit:active{transform:translateY(0)!important;transition-duration:.05s}
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .55s ease,transform .55s cubic-bezier(.34,1.1,.64,1)}
+.reveal.visible{opacity:1;transform:none}
+.reveal-d1{transition-delay:.1s}
+.reveal-d2{transition-delay:.2s}
 </style>
 </head>
 <body>
 <script>
-var CU29_ACCOUNTS_SRC = 'https://script.google.com/macros/s/AKfycbxgdCnO9_Go_bbJO318vkNVdv7X7hjEbHaH0gEdG38dE8eraUa3LMCSKRADyJj389VqnQ/exec';
+var CU29_API = '';
 </script>
 
 <nav>
@@ -521,7 +526,7 @@ function cu29SignOut(){
        <div id="panel-otp" style="display:none">
          <h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:.06em;text-align:center;margin-bottom:.4rem">Verify Identity</h2>
          <p style="font-size:.72rem;color:var(--text-mid);text-align:center;margin-bottom:.5rem;letter-spacing:.04em">A 6-digit code was sent to</p>
-         <p id="otp-email-hint" style="font-size:.78rem;color:var(--copper-pale);text-align:center;font-weight:600;margin-bottom:1.8rem;letter-spacing:.04em"></p>
+         <p id="otp-hint" style="font-size:.78rem;color:var(--copper-pale);text-align:center;font-weight:600;margin-bottom:1.8rem;letter-spacing:.04em"></p>
          <div style="display:flex;gap:.45rem;justify-content:center;margin-bottom:1.4rem">
            <input class="otp-d" maxlength="1" inputmode="numeric" style="width:46px;height:56px;text-align:center;font-size:1.5rem;font-weight:700;background:rgba(1,40,44,.8);border:1px solid var(--border);color:var(--text);font-family:'Montserrat',sans-serif;outline:none;transition:border-color .2s;border-radius:2px">
            <input class="otp-d" maxlength="1" inputmode="numeric" style="width:46px;height:56px;text-align:center;font-size:1.5rem;font-weight:700;background:rgba(1,40,44,.8);border:1px solid var(--border);color:var(--text);font-family:'Montserrat',sans-serif;outline:none;transition:border-color .2s;border-radius:2px">
@@ -530,11 +535,11 @@ function cu29SignOut(){
            <input class="otp-d" maxlength="1" inputmode="numeric" style="width:46px;height:56px;text-align:center;font-size:1.5rem;font-weight:700;background:rgba(1,40,44,.8);border:1px solid var(--border);color:var(--text);font-family:'Montserrat',sans-serif;outline:none;transition:border-color .2s;border-radius:2px">
            <input class="otp-d" maxlength="1" inputmode="numeric" style="width:46px;height:56px;text-align:center;font-size:1.5rem;font-weight:700;background:rgba(1,40,44,.8);border:1px solid var(--border);color:var(--text);font-family:'Montserrat',sans-serif;outline:none;transition:border-color .2s;border-radius:2px">
          </div>
-         <p id="otp-timer" style="font-size:.7rem;color:var(--text-mid);text-align:center;margin-bottom:1rem"></p>
+         
          <div id="otp-error" style="display:none;font-size:.72rem;color:#e08a88;padding:.6rem 1rem;background:rgba(192,80,77,.08);border:1px solid rgba(192,80,77,.3);margin-bottom:1rem;text-align:center"></div>
          <button id="otp-btn" onclick="doVerifyOTP()" class="btn-submit" style="width:100%;text-align:center">Verify Code</button>
          <p style="font-size:.72rem;color:var(--text-mid);text-align:center;margin-top:1.2rem">
-           Didn't receive it? <a href="#" id="otp-resend" onclick="resendOTP();return false" style="color:var(--copper-pale);text-decoration:none;border-bottom:1px solid rgba(200,121,58,.3)">Resend</a>
+           
            &nbsp;&middot;&nbsp;
            <a href="#" onclick="backToSignIn();return false" style="color:var(--copper-pale);text-decoration:none;border-bottom:1px solid rgba(200,121,58,.3)">Back</a>
          </p>
@@ -581,7 +586,25 @@ function cu29SignOut(){
   <p>Conducting Wealth</p>
 </div>
 <script>
-var _otp={code:'',expiry:0,user:null,timer:null};
+// ── CSRF token helper ─────────────────────────────────────────────
+var _csrfToken = null;
+async function getCsrf(){
+  if(_csrfToken)return _csrfToken;
+  var r=await fetch(CU29_API+'/api/csrf-token',{credentials:'include'});
+  var d=await r.json();
+  _csrfToken=d.csrfToken;
+  return _csrfToken;
+}
+async function apiPost(url,body){
+  var tok=await getCsrf();
+  var r=await fetch(CU29_API+url,{
+    method:'POST',credentials:'include',
+    headers:{'Content-Type':'application/json','x-csrf-token':tok},
+    body:JSON.stringify(body)
+  });
+  _csrfToken=null; // rotate after each use
+  return r.json();
+}
 
 function switchTab(tab){
   sessionStorage.setItem('cu29_tab',tab);
@@ -597,55 +620,29 @@ function switchTab(tab){
     tsi.style.color='var(--text-mid)';tsi.style.borderBottom='2px solid transparent';
   }
 }
-function showOTPPanel(email){
+function showOTPPanel(){
   var si=document.getElementById('panel-signin'),reg=document.getElementById('panel-register'),otp=document.getElementById('panel-otp');
   var tabs=document.getElementById('auth-tabs');
   si.style.display='none';reg.style.display='none';otp.style.display='';
   if(tabs)tabs.style.display='none';
-  var parts=email.split('@');
-  var masked=(parts[0].length>3?parts[0].substring(0,3):'***')+'***@'+parts[1];
-  document.getElementById('otp-email-hint').textContent=masked;
   var digits=document.querySelectorAll('.otp-d');
   digits.forEach(function(d){d.value='';});
   if(digits[0])digits[0].focus();
 }
 function backToSignIn(){
-  clearInterval(_otp.timer);
-  _otp={code:'',expiry:0,user:null,timer:null};
   var otp=document.getElementById('panel-otp'),si=document.getElementById('panel-signin');
   var tabs=document.getElementById('auth-tabs');
   otp.style.display='none';si.style.display='';
   if(tabs)tabs.style.display='';
   document.getElementById('otp-error').style.display='none';
-  document.getElementById('otp-timer').textContent='';
-}
-function startOTPTimer(){
-  clearInterval(_otp.timer);
-  function tick(){
-    var left=Math.max(0,Math.floor((_otp.expiry-Date.now())/1000));
-    var m=Math.floor(left/60),s=left%60;
-    var el=document.getElementById('otp-timer');
-    if(el)el.textContent='Code expires in '+m+':'+(s<10?'0':'')+s;
-    if(left<=0){clearInterval(_otp.timer);if(el)el.textContent='Code expired — please click Resend.';}
-  }
-  tick();
-  _otp.timer=setInterval(tick,1000);
-}
-function generateCode(){return String(Math.floor(100000+Math.random()*900000));}
-function sendOTPEmail(email,name,code){
-  var f=new FormData();
-  f.append('access_key','ec02a9bd-afdc-483c-bc83-0246aed5699f');
-  f.append('subject','Your InvestCu29 Verification Code: '+code);
-  f.append('from_name','InvestCu29 Security');
-  f.append('email',email);
-  f.append('message','Hello '+name+',\n\nYour one-time verification code is:\n\n  '+code+'\n\nThis code expires in 5 minutes. Do not share it with anyone.\n\nIf you did not attempt to sign in, please contact us immediately.');
-  return fetch('https://api.web3forms.com/submit',{method:'POST',mode:'no-cors',body:f});
 }
 function togglePwd(id,btn){
   var inp=document.getElementById(id),show=inp.type==='password';
   inp.type=show?'text':'password';btn.textContent=show?'Hide':'Show';
 }
-function doSignIn(){
+
+// ── Login: calls Node backend, handles 2FA if required ────────────
+async function doSignIn(){
   var email=document.getElementById('si-email').value.trim().toLowerCase();
   var pass=document.getElementById('si-password').value;
   var err=document.getElementById('si-error');
@@ -653,87 +650,53 @@ function doSignIn(){
   err.style.display='none';
   if(!email||!pass){err.textContent='Please enter your email and password.';err.style.display='block';return;}
   btn.disabled=true;btn.textContent='Checking…';
-
-  var cb='__cu29login'+Date.now();
-  var done=false;
-  var tag=document.createElement('script');
-  function fail(msg){
-    if(done)return;done=true;
-    delete window[cb];
-    if(tag.parentNode)tag.parentNode.removeChild(tag);
-    btn.disabled=false;btn.textContent='Sign In';
-    err.textContent=msg||'Incorrect email or password.';
-    err.style.display='block';
-  }
-  window[cb]=function(data){
-    if(done)return;done=true;
-    delete window[cb];
-    if(tag.parentNode)tag.parentNode.removeChild(tag);
-    if(!data||!data.success){
+  try {
+    var data=await apiPost('/api/login',{email:email,password:pass});
+    if(!data.success){
       btn.disabled=false;btn.textContent='Sign In';
-      err.textContent='Incorrect email or password.';
-      err.style.display='block';
+      err.textContent=data.error||'Incorrect email or password.';err.style.display='block';
       return;
     }
-    var user={name:data.name,email:data.email,role:data.role};
-    btn.textContent='Sending code…';
-    _otp.code=generateCode();
-    _otp.expiry=Date.now()+5*60*1000;
-    _otp.user=user;
-    sendOTPEmail(user.email,user.name,_otp.code)
-    .then(function(){
-      btn.textContent='Sign In';btn.disabled=false;
-      showOTPPanel(user.email);
-      startOTPTimer();
-    })
-    .catch(function(){
-      btn.textContent='Sign In';btn.disabled=false;
-      err.textContent='Could not send verification code. Check your connection and try again.';
-      err.style.display='block';
-      _otp={code:'',expiry:0,user:null,timer:null};
-    });
-  };
-  tag.onerror=function(){fail('Could not reach the server. Check your connection and try again.');};
-  tag.src=CU29_ACCOUNTS_SRC+'?action=login&email='+encodeURIComponent(email)+'&password='+encodeURIComponent(pass)+'&callback='+cb;
-  document.head.appendChild(tag);
-  setTimeout(function(){fail('Request timed out. Please try again.');},10000);
+    if(data.requires2FA){
+      btn.disabled=false;btn.textContent='Sign In';
+      document.getElementById('otp-hint').textContent='Enter the 6-digit code from your authenticator app.';
+      showOTPPanel();
+      return;
+    }
+    // No 2FA — logged in
+    btn.textContent='Sign In';btn.disabled=false;
+    window.location.href='invest.html';
+  } catch(e){
+    btn.disabled=false;btn.textContent='Sign In';
+    err.textContent='Could not reach the server. Check your connection and try again.';err.style.display='block';
+  }
 }
-function doVerifyOTP(){
+
+// ── Verify TOTP code ─────────────────────────────────────────────
+async function doVerifyOTP(){
   var digits=document.querySelectorAll('.otp-d');
   var entered='';digits.forEach(function(d){entered+=d.value;});
   var err=document.getElementById('otp-error');
   var btn=document.getElementById('otp-btn');
   err.style.display='none';
   if(entered.length<6){err.textContent='Please enter all 6 digits.';err.style.display='block';return;}
-  if(Date.now()>_otp.expiry){err.textContent='Code has expired. Please click Resend.';err.style.display='block';return;}
-  if(entered!==_otp.code){
-    err.textContent='Incorrect code. Please try again.';err.style.display='block';
-    digits.forEach(function(d){d.value='';});digits[0].focus();
-    return;
+  btn.disabled=true;btn.textContent='Verifying…';
+  try {
+    var data=await apiPost('/api/2fa/complete',{token:entered});
+    if(!data.success){
+      btn.disabled=false;btn.textContent='Verify Code';
+      err.textContent=data.error||'Invalid code. Try again.';err.style.display='block';
+      digits.forEach(function(d){d.value='';});digits[0].focus();
+      return;
+    }
+    btn.textContent='Verified!';
+    setTimeout(function(){window.location.href='invest.html';},600);
+  } catch(e){
+    btn.disabled=false;btn.textContent='Verify Code';
+    err.textContent='Could not reach the server. Try again.';err.style.display='block';
   }
-  clearInterval(_otp.timer);
-  var user=_otp.user;
-  var remember=document.getElementById('si-remember').checked;
-  localStorage.setItem('cu29_session',JSON.stringify({email:user.email,name:user.name,role:user.role,exp:Date.now()+(remember?30*24*60*60*1000:2*60*60*1000)}));
-  btn.textContent='Verified!';btn.disabled=true;
-  setTimeout(function(){window.location.href='invest.html';},600);
 }
-function resendOTP(){
-  if(!_otp.user)return;
-  var resendBtn=document.getElementById('otp-resend');
-  resendBtn.textContent='Sending…';
-  _otp.code=generateCode();
-  _otp.expiry=Date.now()+5*60*1000;
-  sendOTPEmail(_otp.user.email,_otp.user.name,_otp.code)
-  .then(function(){
-    resendBtn.textContent='Resend';
-    startOTPTimer();
-    document.getElementById('otp-error').style.display='none';
-    var digits=document.querySelectorAll('.otp-d');
-    digits.forEach(function(d){d.value='';});digits[0].focus();
-  })
-  .catch(function(){resendBtn.textContent='Resend';document.getElementById('otp-error').textContent='Failed to resend. Try again.';document.getElementById('otp-error').style.display='block';});
-}
+
 document.addEventListener('DOMContentLoaded',function(){
   var digits=document.querySelectorAll('.otp-d');
   digits.forEach(function(inp,idx){
@@ -839,4 +802,30 @@ document.addEventListener('DOMContentLoaded',function(){
 })();
 </script></body>
 <div id="cu29-age-gate" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:1rem"><div style="background:#012E32;border:1px solid rgba(200,121,58,.3);padding:2.5rem 2rem;max-width:420px;width:100%;text-align:center;box-shadow:0 32px 80px rgba(0,0,0,.6)"><div style="font-family:'Bebas Neue',cursive;font-size:2.2rem;background:linear-gradient(135deg,#F0C08A,#C8793A);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.2rem">InvestCu29</div><p style="font-size:.55rem;letter-spacing:.25em;text-transform:uppercase;color:#8BB5B0;margin-bottom:2rem">Age Verification</p><div id="cu29-age-q"><h2 style="font-family:'Bebas Neue',cursive;font-size:1.5rem;color:#EAE0D4;margin-bottom:.8rem">Are you 13 or older?</h2><p style="color:#8BB5B0;font-size:.78rem;line-height:1.7;margin-bottom:1.8rem">This site collects personal and financial data for investment purposes. You must be at least 13 years old to continue.</p><div style="display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap"><button onclick="cu29Yes()" style="padding:11px 24px;background:linear-gradient(135deg,#C8793A,#A05E2A);border:none;color:#fff;font-family:'Montserrat',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;cursor:pointer">Yes, I'm 13 or older</button><button onclick="cu29No()" style="padding:11px 24px;background:transparent;border:1.5px solid rgba(180,120,60,.35);color:#8BB5B0;font-family:'Montserrat',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;cursor:pointer">No, I'm under 13</button></div></div><div id="cu29-age-denied" style="display:none"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#C8793A" stroke-width="1.4" style="margin-bottom:1rem"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg><h2 style="font-family:'Bebas Neue',cursive;font-size:1.5rem;color:#EAE0D4;margin-bottom:.8rem">Access Denied</h2><p style="color:#8BB5B0;font-size:.78rem;line-height:1.7">This website is not available to users under 13. We do not collect personal data from children. Please close this page.</p></div></div></div><script>(function(){function getCookie(n){var m=document.cookie.match('(^|;)\s*'+n+'\s*=\s*([^;]+)');return m?m.pop():null}function setCookie(n,v,d){var e=new Date();e.setTime(e.getTime()+d*86400000);document.cookie=n+'='+v+';expires='+e.toUTCString()+';path=/;SameSite=Lax'}var g=document.getElementById('cu29-age-gate');if(!getCookie('cu29_age_ok'))g.style.display='flex';window.cu29Yes=function(){setCookie('cu29_age_ok','1',365);g.style.display='none'};window.cu29No=function(){document.getElementById('cu29-age-q').style.display='none';document.getElementById('cu29-age-denied').style.display='block';document.body.style.overflow='hidden'};})();</script>
+<script>
+(function(){
+  if('IntersectionObserver' in window){
+    var obs=new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}
+      });
+    },{threshold:0.08,rootMargin:'0px 0px -32px 0px'});
+    document.querySelectorAll('.card,.stat,.contact-card,.faq-item').forEach(function(el,i){
+      el.classList.add('reveal');
+      if(i%3===1)el.classList.add('reveal-d1');
+      if(i%3===2)el.classList.add('reveal-d2');
+      obs.observe(el);
+    });
+  }
+  document.querySelectorAll('.btn-submit,.btn-investor').forEach(function(btn){
+    btn.addEventListener('click',function(e){
+      var r=document.createElement('span'),rect=this.getBoundingClientRect();
+      r.style.cssText='pointer-events:none;position:absolute;border-radius:50%;background:rgba(255,255,255,.22);width:120px;height:120px;margin:-60px 0 0 -60px;left:'+(e.clientX-rect.left)+'px;top:'+(e.clientY-rect.top)+'px;transform:scale(0);animation:_ripple .55s ease-out forwards';
+      this.appendChild(r);setTimeout(function(){r.remove()},600);
+    });
+  });
+})();
+</script>
+<style>@keyframes _ripple{to{transform:scale(4);opacity:0}}</style>
 </html>
+

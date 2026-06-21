@@ -7,6 +7,8 @@ const session    = require('express-session');
 const rateLimit  = require('express-rate-limit');
 const { body, validationResult } = require('express-validator');
 const bcrypt     = require('bcrypt');
+const speakeasy  = require('speakeasy');
+const QRCode     = require('qrcode');
 const { doubleCsrf } = require('csrf-csrf');
 const cookieParser = require('cookie-parser');
 
@@ -101,6 +103,12 @@ const applyLimiter = rateLimit({
   message: { success: false, error: 'Too many registration attempts. Try again in 1 hour.' }
 });
 
+const twoFALimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { success: false, error: 'Too many 2FA attempts. Try again in 15 minutes.' }
+});
+
 app.use('/api/', globalLimiter);
 
 // ── Input sanitisation helpers ────────────────────────────────────
@@ -171,19 +179,32 @@ app.post('/api/login',
       if (email === process.env.ADMIN_EMAIL.toLowerCase()) {
         const ok = await bcrypt.compare(password, process.env.ADMIN_PASSWORD_HASH);
         if (!ok) return res.status(401).json({ success: false, error: 'Invalid credentials' });
-        req.session.user = { name: 'Admin', role: 'admin', email };
+        const adminUser = { name: 'Admin', role: 'admin', email };
+        if (process.env.ADMIN_2FA_SECRET) {
+          req.session.pending2FA = { secret: process.env.ADMIN_2FA_SECRET, user: adminUser };
+          return res.json({ success: true, requires2FA: true });
+        }
+        req.session.user = adminUser;
         return res.json({ success: true, name: 'Admin', role: 'admin' });
       }
 
-      // Regular investors — Apps Script returns the stored bcrypt hash, we compare here
+      // Regular investors — Apps Script returns the stored bcrypt hash + 2FA secret
       const data = await callAppsScript({ action: 'login', email, password }, 'POST');
       if (!data.success) return res.status(401).json({ success: false, error: 'Invalid credentials' });
 
-      // Verify password against bcrypt hash server-side (never trust plain-text comparison)
+      // Verify password against bcrypt hash server-side
       const passwordMatch = await bcrypt.compare(password, data.hash);
       if (!passwordMatch) return res.status(401).json({ success: false, error: 'Invalid credentials' });
 
-      req.session.user = { name: data.name, role: data.role || 'investor', email: data.email };
+      const investorUser = { name: data.name, role: data.role || 'investor', email: data.email, twoFASecret: data.twoFASecret || null };
+
+      // If investor has 2FA enabled, require TOTP before granting session
+      if (data.twoFASecret) {
+        req.session.pending2FA = { secret: data.twoFASecret, user: investorUser };
+        return res.json({ success: true, requires2FA: true });
+      }
+
+      req.session.user = investorUser;
       res.json({ success: true, name: data.name, role: data.role || 'investor' });
     } catch (err) {
       console.error('[login]', err.message);
@@ -196,6 +217,110 @@ app.post('/api/login',
 app.post('/api/logout', (req, res) => {
   req.session.destroy(() => res.json({ success: true }));
 });
+
+// ── 2FA: Complete login after TOTP check ──────────────────────────
+app.post('/api/2fa/complete',
+  twoFALimiter,
+  csrfProtection,
+  [ body('token').isLength({ min: 6, max: 6 }).isNumeric().withMessage('Invalid code') ],
+  (req, res) => {
+    if (failValidation(req, res)) return;
+    if (!req.session.pending2FA) {
+      return res.status(400).json({ success: false, error: 'No pending 2FA session' });
+    }
+    const { secret, user } = req.session.pending2FA;
+    const valid = speakeasy.totp.verify({
+      secret,
+      encoding: 'base32',
+      token: req.body.token,
+      window: 1  // allow 30s clock skew
+    });
+    if (!valid) {
+      return res.status(401).json({ success: false, error: 'Invalid code. Try again.' });
+    }
+    req.session.user = user;
+    delete req.session.pending2FA;
+    res.json({ success: true, name: user.name, role: user.role });
+  }
+);
+
+// ── 2FA: Generate setup QR code (must be logged in) ───────────────
+app.get('/api/2fa/setup', (req, res) => {
+  if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+  const secret = speakeasy.generateSecret({
+    name: `InvestCu29 (${req.session.user.email})`,
+    length: 32
+  });
+  QRCode.toDataURL(secret.otpauth_url, (err, dataUrl) => {
+    if (err) return res.status(500).json({ error: 'QR generation failed' });
+    req.session.pending2FASecret = secret.base32;
+    res.json({ qr: dataUrl, secret: secret.base32 });
+  });
+});
+
+// ── 2FA: Enable — verify first code then save secret ─────────────
+app.post('/api/2fa/enable',
+  twoFALimiter,
+  csrfProtection,
+  [ body('token').isLength({ min: 6, max: 6 }).isNumeric().withMessage('Invalid code') ],
+  async (req, res) => {
+    if (failValidation(req, res)) return;
+    if (!req.session.user || !req.session.pending2FASecret) {
+      return res.status(400).json({ success: false, error: 'No setup in progress' });
+    }
+    const valid = speakeasy.totp.verify({
+      secret: req.session.pending2FASecret,
+      encoding: 'base32',
+      token: req.body.token,
+      window: 1
+    });
+    if (!valid) {
+      return res.status(401).json({ success: false, error: 'Invalid code — make sure your app is synced and try again.' });
+    }
+    try {
+      // Save secret to Apps Script sheet for investors; admin stores in session (update .env manually)
+      if (req.session.user.role === 'admin') {
+        // Admin: log the secret — must be saved to ADMIN_2FA_SECRET in .env manually
+        console.log('[2FA] Admin 2FA secret (save to .env as ADMIN_2FA_SECRET):', req.session.pending2FASecret);
+      } else {
+        await callAppsScript({ action: 'save_2fa_secret', email: req.session.user.email, secret: req.session.pending2FASecret });
+      }
+      req.session.user.has2FA = true;
+      delete req.session.pending2FASecret;
+      res.json({ success: true });
+    } catch (err) {
+      console.error('[2fa/enable]', err.message);
+      res.status(500).json({ success: false, error: 'Server error' });
+    }
+  }
+);
+
+// ── 2FA: Disable ──────────────────────────────────────────────────
+app.post('/api/2fa/disable',
+  twoFALimiter,
+  csrfProtection,
+  [ body('token').isLength({ min: 6, max: 6 }).isNumeric().withMessage('Invalid code') ],
+  async (req, res) => {
+    if (failValidation(req, res)) return;
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    // Verify current TOTP before disabling
+    const secret = req.session.user.role === 'admin'
+      ? process.env.ADMIN_2FA_SECRET
+      : req.session.user.twoFASecret;
+    if (!secret) return res.status(400).json({ success: false, error: '2FA is not enabled' });
+    const valid = speakeasy.totp.verify({ secret, encoding: 'base32', token: req.body.token, window: 1 });
+    if (!valid) return res.status(401).json({ success: false, error: 'Invalid code' });
+    try {
+      if (req.session.user.role !== 'admin') {
+        await callAppsScript({ action: 'save_2fa_secret', email: req.session.user.email, secret: '' });
+      }
+      req.session.user.has2FA = false;
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ success: false, error: 'Server error' });
+    }
+  }
+);
 
 // ── Investor application ──────────────────────────────────────────
 app.post('/api/apply',
