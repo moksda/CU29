@@ -157,8 +157,12 @@ async function callAppsScript(params, method = 'POST') {
 // Routes
 // ════════════════════════════════════════════════════════════════
 
-// CSRF token — fetch this before submitting any form
+// CSRF token — fetch this before submitting any form.
+// Writing to req.session forces express-session (saveUninitialized:false)
+// to persist the session and set cu29.sid so the session ID is stable
+// across the follow-up POST that validates the CSRF HMAC.
 app.get('/api/csrf-token', (req, res) => {
+  req.session.csrf_init = true;
   res.json({ csrfToken: generateCsrfToken(req, res) });
 });
 
