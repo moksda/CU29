@@ -145,7 +145,6 @@ async function callAppsScript(params, method = 'POST') {
       const qs = new URLSearchParams(params).toString();
       res = await fetch(`${base}?${qs}`, { redirect: 'follow' });
       text = await res.text();
-      console.log('[appsScript] ← GET', res.status, text.slice(0, 200));
       return JSON.parse(text);
     }
     res = await fetch(base, {
@@ -166,16 +165,6 @@ async function callAppsScript(params, method = 'POST') {
 // ════════════════════════════════════════════════════════════════
 // Routes
 // ════════════════════════════════════════════════════════════════
-
-// Temporary bcrypt smoke-test — remove after diagnosis
-app.get('/api/debug-bcrypt', async (req, res) => {
-  const pw = 'DebugPass1!';
-  const storedHash = '$2b$12$j3/fwRcuQZXaIcTdgjOUYuGOmAiYaP3G1PHXJ4EBByuYWoQTW.DHG';
-  const freshHash = await bcrypt.hash(pw, 4);
-  const matchFresh = await bcrypt.compare(pw, freshHash);
-  const matchStored = await bcrypt.compare(pw, storedHash);
-  res.json({ freshHash, matchFresh, matchStored, hashLen: storedHash.length });
-});
 
 // CSRF token — fetch this before submitting any form.
 // Writing to req.session forces express-session (saveUninitialized:false)
@@ -225,12 +214,10 @@ app.post('/api/login',
 
       // Regular investors — Apps Script returns the stored bcrypt hash + 2FA secret
       const data = await callAppsScript({ action: 'login', email, password }, 'GET');
-      console.log('[login] appsScript success:', data.success, '| hash length:', (data.hash||'').length, '| approved:', data.approved);
       if (!data.success) return res.status(401).json({ success: false, error: 'Invalid credentials' });
 
       // Verify password against bcrypt hash server-side
       const passwordMatch = await bcrypt.compare(password, data.hash);
-      console.log('[login] bcrypt.compare result:', passwordMatch, '| hash prefix:', (data.hash||'').slice(0,10));
       if (!passwordMatch) return res.status(401).json({ success: false, error: 'Invalid credentials' });
 
       // Blank approved = legacy account created before approval gate → allow in
