@@ -306,6 +306,48 @@ app.post('/api/admin/approve',
   }
 );
 
+// ── Investor registration ─────────────────────────────────────────
+app.post('/api/apply',
+  applyLimiter,
+  csrfProtection,
+  [
+    body('first_name').trim().notEmpty().withMessage('First name is required'),
+    body('last_name').trim().notEmpty().withMessage('Last name is required'),
+    body('email').isEmail().normalizeEmail({ gmail_remove_dots: false, gmail_remove_subaddress: false }).withMessage('Valid email required'),
+    body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
+  ],
+  async (req, res) => {
+    if (failValidation(req, res)) return;
+    try {
+      const { first_name, last_name, email, password, ...rest } = req.body;
+      const hash = await bcrypt.hash(password, 12);
+      const data = await callAppsScript({
+        action: 'apply_investor',
+        first_name, last_name, email, password: hash,
+        dob:            rest.dob            || '',
+        nationality:    rest.nationality    || '',
+        country:        rest.country        || '',
+        phone:          rest.phone          || '',
+        investor_type:  rest.investor_type  || '',
+        experience:     rest.experience     || '',
+        history:        rest.history        || '',
+        capital:        rest.capital        || '',
+        horizon:        rest.horizon        || '',
+        interests:      rest.interests      || '',
+        risk:           rest.risk           || '',
+        expected_return:rest.expected_return|| '',
+        source_of_funds:rest.source_of_funds|| '',
+        pep:            rest.pep            || 'no'
+      });
+      if (!data.success) return res.status(400).json({ success: false, error: data.error || 'Registration failed' });
+      res.json({ success: true });
+    } catch (e) {
+      console.error('[apply]', e.message);
+      res.status(500).json({ success: false, error: 'Server error' });
+    }
+  }
+);
+
 // ── 2FA: Complete login after TOTP check ──────────────────────────
 app.post('/api/2fa/complete',
   twoFALimiter,
