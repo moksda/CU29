@@ -458,8 +458,31 @@ function approveButtons(email, currentStatus) {
   if (currentStatus === 'approved' || currentStatus === 'rejected') {
     html += '<button class="btn btn-pending" data-email="' + e + '" data-status="pending" onclick="handleApproveBtn(this)">Reset</button>';
   }
+  html += '<button class="btn" style="border-color:rgba(192,80,77,.4);color:#e08a88" data-email="' + e + '" onclick="deleteApplication(this)">Delete</button>';
   html += '</div>';
   return html;
+}
+
+async function deleteApplication(btn) {
+  var email = btn.getAttribute('data-email');
+  if (!confirm('Permanently delete ' + email + ' from applications and accounts? This cannot be undone.')) return;
+  btn.disabled = true; btn.textContent = 'Deleting…';
+  try {
+    var r = await apiPost('/api/admin/delete-application', { email: email });
+    if (r.success) {
+      _data.applications = _data.applications.filter(function(a) { return a.email.toLowerCase() !== email.toLowerCase(); });
+      _data.investors = _data.investors.filter(function(i) { return i.email.toLowerCase() !== email.toLowerCase(); });
+      renderApplications();
+      renderInvestors();
+      toast('Deleted ' + email);
+    } else {
+      btn.disabled = false; btn.textContent = 'Delete';
+      toast(r.error || 'Delete failed', 'error');
+    }
+  } catch(e) {
+    btn.disabled = false; btn.textContent = 'Delete';
+    toast('Error deleting account', 'error');
+  }
 }
 
 function handleApproveBtn(btn) {

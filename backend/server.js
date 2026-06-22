@@ -324,6 +324,22 @@ app.get('/api/admin/contacts', requireAdmin, async (req, res) => {
   }
 });
 
+// ── Admin: delete application + account ──────────────────────────
+app.post('/api/admin/delete-application',
+  requireAdmin,
+  csrfProtection,
+  [body('email').isEmail().normalizeEmail({ gmail_remove_dots: false, gmail_remove_subaddress: false })],
+  async (req, res) => {
+    if (failValidation(req, res)) return;
+    try {
+      const data = await callAppsScript({ action: 'delete_application', email: req.body.email });
+      res.json(data);
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  }
+);
+
 // ── Admin: set investor approved status ───────────────────────────
 app.post('/api/admin/approve',
   requireAdmin,

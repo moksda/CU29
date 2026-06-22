@@ -55,6 +55,9 @@ function doPost(e) {
     if (p.action === 'set_content') {
       return ContentService.createTextOutput(JSON.stringify(setContent(p.key, p.value))).setMimeType(ContentService.MimeType.JSON);
     }
+    if (p.action === 'delete_application') {
+      return ContentService.createTextOutput(JSON.stringify(deleteApplication(p.email))).setMimeType(ContentService.MimeType.JSON);
+    }
 
     return ContentService.createTextOutput(JSON.stringify({ success: false, error: 'unknown action' })).setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
@@ -285,6 +288,37 @@ function getAdminContacts() {
   return { success: true, contacts: contacts };
 }
 
+
+function deleteApplication(email) {
+  email = String(email || '').trim().toLowerCase();
+  if (!email) return { success: false, error: 'No email' };
+  var ss = SpreadsheetApp.openById(ACCOUNTS_SHEET_ID);
+  var deleted = 0;
+
+  // Remove from Investor Applications sheet
+  var appSheet = ss.getSheetByName('Investor Applications');
+  if (appSheet) {
+    var rows = appSheet.getDataRange().getValues();
+    for (var i = rows.length - 1; i >= 1; i--) {
+      if (String(rows[i][2] || '').trim().toLowerCase() === email) {
+        appSheet.deleteRow(i + 1);
+        deleted++;
+      }
+    }
+  }
+
+  // Remove from main accounts sheet
+  var accSheet = getAccountsSheet();
+  var accRows = accSheet.getDataRange().getValues();
+  for (var j = accRows.length - 1; j >= 1; j--) {
+    if (String(accRows[j][1] || '').trim().toLowerCase() === email) {
+      accSheet.deleteRow(j + 1);
+      deleted++;
+    }
+  }
+
+  return { success: true, deleted: deleted };
+}
 
 function setApproved(email, status) {
   email = email.trim().toLowerCase();
