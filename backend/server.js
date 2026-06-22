@@ -191,25 +191,33 @@ app.post('/api/login',
     try {
       const { email, password } = req.body;
 
-      const adminEmail = (process.env.ADMIN_EMAIL || '').toLowerCase();
+      // Build admin list from env — supports up to 5 admins via ADMIN_EMAIL_N / ADMIN_PASSWORD_N
+      const adminAccounts = [];
+      for (let n = 0; n <= 5; n++) {
+        const suffix = n === 0 ? '' : `_${n}`;
+        const e = (process.env[`ADMIN_EMAIL${suffix}`] || '').toLowerCase().trim();
+        const p = (process.env[`ADMIN_PASSWORD${suffix}`] || '').trim();
+        const ph = (process.env[`ADMIN_PASSWORD_HASH${suffix}`] || '').trim();
+        const name = (process.env[`ADMIN_NAME${suffix}`] || 'Admin').trim();
+        if (e) adminAccounts.push({ email: e, password: p, hash: ph, name });
+      }
 
-      // Admin — tries ADMIN_PASSWORD (plain) then ADMIN_PASSWORD_HASH (bcrypt)
-      if (email === adminEmail) {
+      const adminMatch = adminAccounts.find(a => a.email === email);
+      if (adminMatch) {
         let ok = false;
-        const adminPwd = (process.env.ADMIN_PASSWORD || '').trim();
-        if (adminPwd) {
-          ok = adminPwd === password.trim();
-        } else if (process.env.ADMIN_PASSWORD_HASH) {
-          ok = await bcrypt.compare(password, process.env.ADMIN_PASSWORD_HASH);
+        if (adminMatch.password) {
+          ok = adminMatch.password === password.trim();
+        } else if (adminMatch.hash) {
+          ok = await bcrypt.compare(password, adminMatch.hash);
         }
         if (!ok) return res.status(401).json({ success: false, error: 'Invalid credentials' });
-        const adminUser = { name: 'Admin', role: 'admin', email };
+        const adminUser = { name: adminMatch.name, role: 'admin', email };
         if (process.env.ADMIN_2FA_SECRET) {
           req.session.pending2FA = { secret: process.env.ADMIN_2FA_SECRET, user: adminUser };
           return res.json({ success: true, requires2FA: true });
         }
         req.session.user = adminUser;
-        return res.json({ success: true, name: 'Admin', role: 'admin' });
+        return res.json({ success: true, name: adminMatch.name, role: 'admin' });
       }
 
       // Regular investors — Apps Script returns the stored bcrypt hash + 2FA secret
