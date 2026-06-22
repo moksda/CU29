@@ -721,32 +721,39 @@ document.addEventListener('DOMContentLoaded',function(){
     });
   });
 });
-function doRequestAccess(){
-  var name=document.getElementById('reg-name').value.trim();
+async function doRequestAccess(){
+  var fullName=document.getElementById('reg-name').value.trim();
   var email=document.getElementById('reg-email').value.trim();
   var phoneCode=document.getElementById('reg-phone-code').value;
   var phoneNum=document.getElementById('reg-phone').value.trim();
   var phone=phoneNum?phoneCode+' '+phoneNum:'';
   var pass=document.getElementById('reg-password').value;
   var confirm=document.getElementById('reg-confirm').value;
-  var reason=document.getElementById('reg-reason').value.trim();
   var err=document.getElementById('reg-error');
   var suc=document.getElementById('reg-success');
   var btn=document.getElementById('reg-btn');
   err.style.display='none';suc.style.display='none';
-  if(!name){err.textContent='Please enter your full name.';err.style.display='block';return;}
+  if(!fullName){err.textContent='Please enter your full name.';err.style.display='block';return;}
   if(!email||!email.includes('@')){err.textContent='Please enter a valid email address.';err.style.display='block';return;}
-  if(pass.length<6){err.textContent='Password must be at least 6 characters.';err.style.display='block';return;}
+  if(pass.length<8){err.textContent='Password must be at least 8 characters.';err.style.display='block';return;}
   if(pass!==confirm){err.textContent='Passwords do not match.';err.style.display='block';return;}
   btn.disabled=true;btn.textContent='Sending…';
-  var base='https://script.google.com/macros/s/AKfycbwtyfJTJgaOcmQeWtS1e_7PbPOjcgo-Xm-nvicucs1KF8CfHpYrfEKZVmMpXshEuzmmnw/exec';
-  var qs='?action=signup&name='+encodeURIComponent(name)+'&email='+encodeURIComponent(email)+'&phone='+encodeURIComponent(phone)+'&password='+encodeURIComponent(pass)+'&reason='+encodeURIComponent(reason);
-  fetch(base+qs,{mode:'no-cors'})
-  .then(function(){
-    suc.textContent="Request received! We'll review and be in touch within 1-3 business days.";
-    suc.style.display='block';btn.textContent='Sent';
-  })
-  .catch(function(){err.textContent='Something went wrong — please try again.';err.style.display='block';btn.disabled=false;btn.textContent='Send Request';});
+  var parts=fullName.split(' ');
+  var first_name=parts[0];
+  var last_name=parts.slice(1).join(' ')||parts[0];
+  try{
+    var data=await apiPost('/api/apply',{first_name:first_name,last_name:last_name,email:email,password:pass,phone:phone});
+    if(data.success){
+      suc.textContent="Application received! Your account is pending approval — we'll be in touch within 72 hours.";
+      suc.style.display='block';btn.textContent='Sent';
+    } else {
+      err.textContent=(data.errors&&data.errors[0])||data.error||'Something went wrong.';
+      err.style.display='block';btn.disabled=false;btn.textContent='Send Request';
+    }
+  }catch(e){
+    err.textContent='Could not reach the server. Please try again.';
+    err.style.display='block';btn.disabled=false;btn.textContent='Send Request';
+  }
 }
 </script>
 <script>
