@@ -306,18 +306,6 @@ app.post('/api/admin/approve',
   }
 );
 
-// ── Admin: delete user (temporary — remove after cleanup) ─────────
-app.post('/api/admin/delete-user', requireAdmin, csrfProtection,
-  [body('email').isEmail().normalizeEmail({ gmail_remove_dots: false, gmail_remove_subaddress: false })],
-  async (req, res) => {
-    if (failValidation(req, res)) return;
-    try {
-      const data = await callAppsScript({ action: 'delete_user', email: req.body.email });
-      res.json(data);
-    } catch (e) { res.status(500).json({ error: e.message }); }
-  }
-);
-
 // ── Investor registration ─────────────────────────────────────────
 app.post('/api/apply',
   applyLimiter,

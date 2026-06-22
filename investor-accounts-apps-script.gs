@@ -50,9 +50,7 @@ function doPost(e) {
     if (p.action === 'set_approved') {
       return ContentService.createTextOutput(JSON.stringify(setApproved(p.email, p.status))).setMimeType(ContentService.MimeType.JSON);
     }
-    if (p.action === 'delete_user') {
-      return ContentService.createTextOutput(JSON.stringify(deleteUser(p.email))).setMimeType(ContentService.MimeType.JSON);
-    }
+
     return ContentService.createTextOutput(JSON.stringify({ success: false, error: 'unknown action' })).setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({ success: false, error: err.toString() })).setMimeType(ContentService.MimeType.JSON);
@@ -243,34 +241,6 @@ function getAdminContacts() {
   return { success: true, contacts: contacts };
 }
 
-function deleteUser(email) {
-  email = email.trim().toLowerCase();
-  var deleted = false;
-
-  // Remove from accounts sheet
-  var acct = getAccountsSheet();
-  var rows = acct.getDataRange().getValues();
-  for (var i = rows.length - 1; i >= 1; i--) {
-    if (String(rows[i][1] || '').trim().toLowerCase() === email) {
-      acct.deleteRow(i + 1);
-      deleted = true;
-    }
-  }
-
-  // Remove from Investor Applications sheet
-  var ss = SpreadsheetApp.openById(ACCOUNTS_SHEET_ID);
-  var appSheet = ss.getSheetByName('Investor Applications');
-  if (appSheet) {
-    var appRows = appSheet.getDataRange().getValues();
-    for (var j = appRows.length - 1; j >= 1; j--) {
-      if (String(appRows[j][2] || '').trim().toLowerCase() === email) {
-        appSheet.deleteRow(j + 1);
-      }
-    }
-  }
-
-  return deleted ? { success: true } : { success: false, error: 'User not found' };
-}
 
 function setApproved(email, status) {
   email = email.trim().toLowerCase();
