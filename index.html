@@ -395,15 +395,16 @@ function cu29SignOut(){
 
   function saveCache(){
     try{
-      var c={};
+      var c={ts:Date.now()};
       MARKETS.forEach(function(m){ if(state[m.sym].price) c[m.sym]=state[m.sym]; });
-      localStorage.setItem('cu29_mkt5',JSON.stringify(c));
+      localStorage.setItem('cu29_mkt6',JSON.stringify(c));
     }catch(e){}
   }
 
   function loadCache(){
     try{
-      var c=JSON.parse(localStorage.getItem('cu29_mkt5')||'{}');
+      var c=JSON.parse(localStorage.getItem('cu29_mkt6')||'{}');
+      if(!c.ts||Date.now()-c.ts>15*60*1000) return;
       Object.keys(c).forEach(function(sym){ if(state[sym]){ state[sym].price=c[sym].price; state[sym].pct=c[sym].pct; } });
     }catch(e){}
   }
