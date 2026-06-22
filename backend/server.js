@@ -145,6 +145,7 @@ async function callAppsScript(params, method = 'POST') {
       const qs = new URLSearchParams(params).toString();
       res = await fetch(`${base}?${qs}`, { redirect: 'follow' });
       text = await res.text();
+      console.log('[appsScript] ← GET', res.status, text.slice(0, 200));
       return JSON.parse(text);
     }
     res = await fetch(base, {
@@ -214,10 +215,12 @@ app.post('/api/login',
 
       // Regular investors — Apps Script returns the stored bcrypt hash + 2FA secret
       const data = await callAppsScript({ action: 'login', email, password }, 'GET');
+      console.log('[login] appsScript success:', data.success, '| hash length:', (data.hash||'').length, '| approved:', data.approved);
       if (!data.success) return res.status(401).json({ success: false, error: 'Invalid credentials' });
 
       // Verify password against bcrypt hash server-side
       const passwordMatch = await bcrypt.compare(password, data.hash);
+      console.log('[login] bcrypt.compare result:', passwordMatch, '| hash prefix:', (data.hash||'').slice(0,10));
       if (!passwordMatch) return res.status(401).json({ success: false, error: 'Invalid credentials' });
 
       // Blank approved = legacy account created before approval gate → allow in
