@@ -265,6 +265,35 @@ app.get('/api/me', (req, res) => {
   res.json({ authenticated: true, name: req.session.user.name, role: req.session.user.role });
 });
 
+// ── CMS content (public read, admin write) ────────────────────────
+let _contentCache = null;
+let _contentCacheAt = 0;
+app.get('/api/content', async (req, res) => {
+  try {
+    if (_contentCache && Date.now() - _contentCacheAt < 60000) return res.json(_contentCache);
+    const data = await callAppsScript({ action: 'content' }, 'GET');
+    _contentCache = data;
+    _contentCacheAt = Date.now();
+    res.json(data);
+  } catch (e) {
+    res.json({ success: true, content: {} });
+  }
+});
+
+app.post('/api/admin/content', requireAdmin, csrfProtection,
+  [body('key').trim().notEmpty(), body('value').trim()],
+  async (req, res) => {
+    if (failValidation(req, res)) return;
+    try {
+      const data = await callAppsScript({ action: 'set_content', key: req.body.key, value: req.body.value });
+      _contentCache = null; // bust cache
+      res.json(data);
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  }
+);
+
 // ── Admin: list applications ──────────────────────────────────────
 app.get('/api/admin/applications', requireAdmin, async (req, res) => {
   try {

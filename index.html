@@ -458,26 +458,7 @@ function cu29SignOut(){
 })();
 </script>
 <script>
-(function(){
-  var SRC='https://script.google.com/macros/s/AKfycbwtyfJTJgaOcmQeWtS1e_7PbPOjcgo-Xm-nvicucs1KF8CfHpYrfEKZVmMpXshEuzmmnw/exec';
-  var cb='__cu29cms'+Date.now();
-  var tag=document.createElement('script');
-  window[cb]=function(data){
-    try{
-      Object.keys(data).forEach(function(key){
-        document.querySelectorAll('[data-cms="'+key+'"]').forEach(function(el){
-          el.textContent=data[key];
-        });
-      });
-    }catch(e){}
-    delete window[cb];
-    if(tag.parentNode)tag.parentNode.removeChild(tag);
-  };
-  tag.onerror=function(){delete window[cb];if(tag.parentNode)tag.parentNode.removeChild(tag);};
-  tag.src=SRC+'?action=content&callback='+cb;
-  document.head.appendChild(tag);
-  setTimeout(function(){if(window[cb])window[cb]({});},6000);
-})();
+(function(){fetch('/api/content').then(function(r){return r.json();}).then(function(d){if(!d.content)return;Object.keys(d.content).forEach(function(k){document.querySelectorAll('[data-cms="'+k+'"]').forEach(function(el){el.textContent=d.content[k];});});}).catch(function(){});})();
 </script></body></html>
 <script>
 (function(){

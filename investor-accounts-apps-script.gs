@@ -16,6 +16,8 @@ function doGet(e) {
 
   if (action === 'login') {
     result = handleLogin(e.parameter.email, e.parameter.password);
+  } else if (action === 'content') {
+    result = getContent();
   } else if (action === 'market_data') {
     result = handleGetMarketData();
   } else if (action === 'admin_applications') {
@@ -49,6 +51,9 @@ function doPost(e) {
     }
     if (p.action === 'set_approved') {
       return ContentService.createTextOutput(JSON.stringify(setApproved(p.email, p.status))).setMimeType(ContentService.MimeType.JSON);
+    }
+    if (p.action === 'set_content') {
+      return ContentService.createTextOutput(JSON.stringify(setContent(p.key, p.value))).setMimeType(ContentService.MimeType.JSON);
     }
 
     return ContentService.createTextOutput(JSON.stringify({ success: false, error: 'unknown action' })).setMimeType(ContentService.MimeType.JSON);
@@ -166,6 +171,45 @@ function handleLogin(email, password) {
 }
 
 // ── Admin data functions ──────────────────────────────────────────
+
+// ── CMS Content ──────────────────────────────────────────────────
+
+function getContentSheet() {
+  var ss = SpreadsheetApp.openById(ACCOUNTS_SHEET_ID);
+  var sheet = ss.getSheetByName('Content');
+  if (!sheet) {
+    sheet = ss.insertSheet('Content');
+    sheet.appendRow(['key', 'value', 'updatedAt']);
+  }
+  return sheet;
+}
+
+function getContent() {
+  var sheet = getContentSheet();
+  var rows = sheet.getDataRange().getValues();
+  var content = {};
+  for (var i = 1; i < rows.length; i++) {
+    var key = String(rows[i][0] || '').trim();
+    if (key) content[key] = String(rows[i][1] || '');
+  }
+  return { success: true, content: content };
+}
+
+function setContent(key, value) {
+  key = String(key || '').trim();
+  if (!key) return { success: false, error: 'No key' };
+  var sheet = getContentSheet();
+  var rows = sheet.getDataRange().getValues();
+  for (var i = 1; i < rows.length; i++) {
+    if (String(rows[i][0] || '').trim() === key) {
+      sheet.getRange(i + 1, 2).setValue(value);
+      sheet.getRange(i + 1, 3).setValue(new Date());
+      return { success: true };
+    }
+  }
+  sheet.appendRow([key, value, new Date()]);
+  return { success: true };
+}
 
 function getAdminInvestors() {
   var rows = getAccountsSheet().getDataRange().getValues();

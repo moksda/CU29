@@ -325,26 +325,7 @@ function cu29SignOut(){
   <p>© 2026 InvestCu29 · GMG08 Ltd · Company No. 09965839 · Registered in England &amp; Wales</p>
   <p>Conducting Wealth</p>
 </div><script>
-(function(){
-  var SRC='https://script.google.com/macros/s/AKfycbwtyfJTJgaOcmQeWtS1e_7PbPOjcgo-Xm-nvicucs1KF8CfHpYrfEKZVmMpXshEuzmmnw/exec';
-  var cb='__cu29cms'+Date.now();
-  var tag=document.createElement('script');
-  window[cb]=function(data){
-    try{
-      Object.keys(data).forEach(function(key){
-        document.querySelectorAll('[data-cms="'+key+'"]').forEach(function(el){
-          el.textContent=data[key];
-        });
-      });
-    }catch(e){}
-    delete window[cb];
-    if(tag.parentNode)tag.parentNode.removeChild(tag);
-  };
-  tag.onerror=function(){delete window[cb];if(tag.parentNode)tag.parentNode.removeChild(tag);};
-  tag.src=SRC+'?action=content&callback='+cb;
-  document.head.appendChild(tag);
-  setTimeout(function(){if(window[cb])window[cb]({});},6000);
-})();
+(function(){fetch('/api/content').then(function(r){return r.json();}).then(function(d){if(!d.content)return;Object.keys(d.content).forEach(function(k){document.querySelectorAll('[data-cms="'+k+'"]').forEach(function(el){el.textContent=d.content[k];});});}).catch(function(){});})();
 </script></body>
 <div id="cu29-age-gate" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:1rem"><div style="background:#012E32;border:1px solid rgba(200,121,58,.3);padding:2.5rem 2rem;max-width:420px;width:100%;text-align:center;box-shadow:0 32px 80px rgba(0,0,0,.6)"><div style="font-family:'Bebas Neue',cursive;font-size:2.2rem;background:linear-gradient(135deg,#F0C08A,#C8793A);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.2rem">InvestCu29</div><p style="font-size:.55rem;letter-spacing:.25em;text-transform:uppercase;color:#8BB5B0;margin-bottom:2rem">Age Verification</p><div id="cu29-age-q"><h2 style="font-family:'Bebas Neue',cursive;font-size:1.5rem;color:#EAE0D4;margin-bottom:.8rem">Are you 13 or older?</h2><p style="color:#8BB5B0;font-size:.78rem;line-height:1.7;margin-bottom:1.8rem">This site collects personal and financial data for investment purposes. You must be at least 13 years old to continue.</p><div style="display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap"><button onclick="cu29Yes()" style="padding:11px 24px;background:linear-gradient(135deg,#C8793A,#A05E2A);border:none;color:#fff;font-family:'Montserrat',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;cursor:pointer">Yes, I'm 13 or older</button><button onclick="cu29No()" style="padding:11px 24px;background:transparent;border:1.5px solid rgba(180,120,60,.35);color:#8BB5B0;font-family:'Montserrat',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;cursor:pointer">No, I'm under 13</button></div></div><div id="cu29-age-denied" style="display:none"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#C8793A" stroke-width="1.4" style="margin-bottom:1rem"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg><h2 style="font-family:'Bebas Neue',cursive;font-size:1.5rem;color:#EAE0D4;margin-bottom:.8rem">Access Denied</h2><p style="color:#8BB5B0;font-size:.78rem;line-height:1.7">This website is not available to users under 13. We do not collect personal data from children. Please close this page.</p></div></div></div><script>(function(){function getCookie(n){var m=document.cookie.match('(^|;)\s*'+n+'\s*=\s*([^;]+)');return m?m.pop():null}function setCookie(n,v,d){var e=new Date();e.setTime(e.getTime()+d*86400000);document.cookie=n+'='+v+';expires='+e.toUTCString()+';path=/;SameSite=Lax'}var g=document.getElementById('cu29-age-gate');if(!getCookie('cu29_age_ok'))g.style.display='flex';window.cu29Yes=function(){setCookie('cu29_age_ok','1',365);g.style.display='none'};window.cu29No=function(){document.getElementById('cu29-age-q').style.display='none';document.getElementById('cu29-age-denied').style.display='block';document.body.style.overflow='hidden'};})();</script>
 <script>

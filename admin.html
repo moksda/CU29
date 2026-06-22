@@ -193,6 +193,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:64px;
     <button class="tab" onclick="switchTab('contacts')" id="tab-btn-contacts">
       Contacts <span class="tab-badge" id="tbadge-contacts">0</span>
     </button>
+    <button class="tab" onclick="switchTab('content')" id="tab-btn-content">Content</button>
   </div>
 
   <!-- Applications -->
@@ -232,6 +233,16 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:64px;
     <div class="card-list" id="list-investors">
       <div class="loading"><div class="spinner"></div><br>Loading investors…</div>
     </div>
+  </div>
+
+  <!-- Content CMS -->
+  <div class="content" id="content-content">
+    <div class="toolbar" style="justify-content:space-between;align-items:center">
+      <span style="font-size:.7rem;color:var(--text-mid);letter-spacing:.08em">Edit text displayed on website pages. Changes go live within 60 seconds.</span>
+      <button class="btn btn-approve" onclick="saveAllContent()" id="cms-save-btn" style="min-width:120px">Save All</button>
+    </div>
+    <div id="cms-fields" style="display:flex;flex-direction:column;gap:1.2rem;padding:1.5rem 0"></div>
+    <div id="cms-status" style="font-size:.75rem;padding:.6rem 1rem;display:none;margin-top:.5rem"></div>
   </div>
 
   <!-- Contacts -->
@@ -622,6 +633,129 @@ function switchTab(tab) {
   document.querySelectorAll('.content').forEach(function(c) { c.classList.remove('active'); });
   document.getElementById('tab-btn-' + tab).classList.add('active');
   document.getElementById('content-' + tab).classList.add('active');
+  if (tab === 'content') loadCmsFields();
+}
+
+// ── CMS Content editor ────────────────────────────────────────────
+var CMS_FIELDS = [
+  { key: 'home_sub',           label: 'Homepage — Hero subtitle',              page: 'index.html',                  type: 'textarea' },
+  { key: 'stat_1_val',         label: 'Homepage — Stat 1 value',               page: 'index.html',                  type: 'text' },
+  { key: 'stat_1_lbl',         label: 'Homepage — Stat 1 label',               page: 'index.html',                  type: 'text' },
+  { key: 'stat_2_val',         label: 'Homepage — Stat 2 value',               page: 'index.html',                  type: 'text' },
+  { key: 'stat_2_lbl',         label: 'Homepage — Stat 2 label',               page: 'index.html',                  type: 'text' },
+  { key: 'stat_3_val',         label: 'Homepage — Stat 3 value',               page: 'index.html',                  type: 'text' },
+  { key: 'stat_3_lbl',         label: 'Homepage — Stat 3 label',               page: 'index.html',                  type: 'text' },
+  { key: 'stat_4_val',         label: 'Homepage — Stat 4 value',               page: 'index.html',                  type: 'text' },
+  { key: 'stat_4_lbl',         label: 'Homepage — Stat 4 label',               page: 'index.html',                  type: 'text' },
+  { key: 'about_eyebrow',      label: 'About — Eyebrow tag',                   page: 'about.html',                  type: 'text' },
+  { key: 'about_sub',          label: 'About — Subtitle',                      page: 'about.html',                  type: 'textarea' },
+  { key: 'invest_eyebrow',     label: 'Invest — Eyebrow tag',                  page: 'invest.html',                 type: 'text' },
+  { key: 'invest_sub',         label: 'Invest — Subtitle',                     page: 'invest.html',                 type: 'textarea' },
+  { key: 'real_estate_eyebrow',label: 'Real Estate — Eyebrow tag',             page: 'real-estate.html',            type: 'text' },
+  { key: 'real_estate_sub',    label: 'Real Estate — Subtitle',                page: 'real-estate.html',            type: 'textarea' },
+  { key: 'charity_eyebrow',    label: 'Charity — Eyebrow tag',                 page: 'charity.html',                type: 'text' },
+  { key: 'charity_sub',        label: 'Charity — Subtitle',                    page: 'charity.html',                type: 'textarea' },
+  { key: 'contact_eyebrow',    label: 'Contact — Eyebrow tag',                 page: 'contact.html',                type: 'text' },
+  { key: 'contact_sub',        label: 'Contact — Subtitle',                    page: 'contact.html',                type: 'textarea' },
+  { key: 'joint_ventures_eyebrow', label: 'Joint Ventures — Eyebrow tag',      page: 'joint-ventures.html',         type: 'text' },
+  { key: 'joint_ventures_sub', label: 'Joint Ventures — Subtitle',             page: 'joint-ventures.html',         type: 'textarea' },
+  { key: 'partnerships_eyebrow', label: 'Partnerships — Eyebrow tag',          page: 'partnerships.html',           type: 'text' },
+  { key: 'partnerships_sub',   label: 'Partnerships — Subtitle',               page: 'partnerships.html',           type: 'textarea' },
+  { key: 'become_investor_eyebrow', label: 'Become Investor — Eyebrow tag',    page: 'become-investor.html',        type: 'text' },
+  { key: 'become_investor_sub', label: 'Become Investor — Subtitle',           page: 'become-investor.html',        type: 'textarea' },
+  { key: 'investor_relations_eyebrow', label: 'Investor Relations — Eyebrow',  page: 'investor-relations.html',     type: 'text' },
+  { key: 'investor_relations_sub', label: 'Investor Relations — Subtitle',     page: 'investor-relations.html',     type: 'textarea' },
+  { key: 'due_diligence_eyebrow', label: 'Due Diligence — Eyebrow tag',        page: 'due-diligence.html',          type: 'text' },
+  { key: 'due_diligence_sub',  label: 'Due Diligence — Subtitle',              page: 'due-diligence.html',          type: 'textarea' },
+  { key: 'quarterly_reports_eyebrow', label: 'Quarterly Reports — Eyebrow',    page: 'quarterly-reports.html',      type: 'text' },
+  { key: 'quarterly_reports_sub', label: 'Quarterly Reports — Subtitle',       page: 'quarterly-reports.html',      type: 'textarea' },
+  { key: 'faq_eyebrow',        label: 'FAQ — Eyebrow tag',                     page: 'faq.html',                    type: 'text' },
+  { key: 'compliance_eyebrow', label: 'Compliance — Eyebrow tag',              page: 'compliance.html',             type: 'text' },
+  { key: 'compliance_sub',     label: 'Compliance — Subtitle',                 page: 'compliance.html',             type: 'textarea' }
+];
+
+var _cmsLoaded = false;
+
+async function loadCmsFields() {
+  if (_cmsLoaded) return;
+  var container = document.getElementById('cms-fields');
+  container.innerHTML = '<div style="color:var(--text-mid);font-size:.8rem;padding:1rem">Loading content…</div>';
+  try {
+    var r = await fetch(CU29_API + '/api/content', { credentials: 'include' });
+    var data = await r.json();
+    var live = data.content || {};
+    container.innerHTML = '';
+
+    // Group by page
+    var pages = {};
+    CMS_FIELDS.forEach(function(f) {
+      if (!pages[f.page]) pages[f.page] = [];
+      pages[f.page].push(f);
+    });
+
+    Object.keys(pages).forEach(function(page) {
+      var section = document.createElement('div');
+      section.style.cssText = 'border:1px solid rgba(200,121,58,.15);padding:1.2rem 1.5rem;background:rgba(1,40,44,.3)';
+      var title = document.createElement('p');
+      title.style.cssText = 'font-size:.6rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--copper);margin:0 0 1rem';
+      title.textContent = page;
+      section.appendChild(title);
+
+      pages[page].forEach(function(f) {
+        var wrap = document.createElement('div');
+        wrap.style.cssText = 'margin-bottom:.9rem';
+        var lbl = document.createElement('label');
+        lbl.style.cssText = 'display:block;font-size:.68rem;color:var(--text-mid);margin-bottom:.35rem;letter-spacing:.05em';
+        lbl.textContent = f.label.replace(/^[^—]+— /, '');
+        var input;
+        if (f.type === 'textarea') {
+          input = document.createElement('textarea');
+          input.rows = 3;
+          input.style.cssText = 'resize:vertical;min-height:60px';
+        } else {
+          input = document.createElement('input');
+          input.type = 'text';
+        }
+        input.style.cssText += ';width:100%;box-sizing:border-box;background:rgba(1,30,34,.8);border:1px solid rgba(200,121,58,.2);color:#eae0d4;padding:.55rem .8rem;font-family:inherit;font-size:.8rem;outline:none';
+        input.value = live[f.key] !== undefined ? live[f.key] : '';
+        input.setAttribute('data-cms-key', f.key);
+        wrap.appendChild(lbl);
+        wrap.appendChild(input);
+        section.appendChild(wrap);
+      });
+      container.appendChild(section);
+    });
+    _cmsLoaded = true;
+  } catch(e) {
+    container.innerHTML = '<div style="color:#e08a88;padding:1rem;font-size:.8rem">Failed to load content. Try refreshing.</div>';
+  }
+}
+
+async function saveAllContent() {
+  var inputs = document.querySelectorAll('[data-cms-key]');
+  var btn = document.getElementById('cms-save-btn');
+  var status = document.getElementById('cms-status');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  var saved = 0; var failed = 0;
+  for (var i = 0; i < inputs.length; i++) {
+    var key = inputs[i].getAttribute('data-cms-key');
+    var value = inputs[i].value;
+    try {
+      var r = await apiPost('/api/admin/content', { key: key, value: value });
+      if (r.success) saved++;
+      else failed++;
+    } catch(e) { failed++; }
+  }
+  btn.disabled = false; btn.textContent = 'Save All';
+  status.style.display = 'block';
+  if (failed === 0) {
+    status.style.cssText = 'font-size:.75rem;padding:.6rem 1rem;display:block;color:#6ecfa0;background:rgba(80,180,120,.08);border:1px solid rgba(80,180,120,.3)';
+    status.textContent = saved + ' fields saved. Changes will be live on the website within 60 seconds.';
+    toast('Content saved successfully');
+  } else {
+    status.style.cssText = 'font-size:.75rem;padding:.6rem 1rem;display:block;color:#e08a88;background:rgba(192,80,77,.08);border:1px solid rgba(192,80,77,.3)';
+    status.textContent = saved + ' saved, ' + failed + ' failed. You may need to redeploy the Apps Script.';
+  }
 }
 
 function toast(msg, type) {
