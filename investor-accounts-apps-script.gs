@@ -245,15 +245,31 @@ function getAdminContacts() {
 
 function deleteUser(email) {
   email = email.trim().toLowerCase();
-  var sheet = getAccountsSheet();
-  var rows = sheet.getDataRange().getValues();
+  var deleted = false;
+
+  // Remove from accounts sheet
+  var acct = getAccountsSheet();
+  var rows = acct.getDataRange().getValues();
   for (var i = rows.length - 1; i >= 1; i--) {
     if (String(rows[i][1] || '').trim().toLowerCase() === email) {
-      sheet.deleteRow(i + 1);
-      return { success: true };
+      acct.deleteRow(i + 1);
+      deleted = true;
     }
   }
-  return { success: false, error: 'User not found' };
+
+  // Remove from Investor Applications sheet
+  var ss = SpreadsheetApp.openById(ACCOUNTS_SHEET_ID);
+  var appSheet = ss.getSheetByName('Investor Applications');
+  if (appSheet) {
+    var appRows = appSheet.getDataRange().getValues();
+    for (var j = appRows.length - 1; j >= 1; j--) {
+      if (String(appRows[j][2] || '').trim().toLowerCase() === email) {
+        appSheet.deleteRow(j + 1);
+      }
+    }
+  }
+
+  return deleted ? { success: true } : { success: false, error: 'User not found' };
 }
 
 function setApproved(email, status) {
