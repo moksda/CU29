@@ -213,7 +213,7 @@ app.post('/api/login',
       }
 
       // Regular investors — Apps Script returns the stored bcrypt hash + 2FA secret
-      const data = await callAppsScript({ action: 'login', email, password }, 'POST');
+      const data = await callAppsScript({ action: 'login', email, password }, 'GET');
       if (!data.success) return res.status(401).json({ success: false, error: 'Invalid credentials' });
 
       // Verify password against bcrypt hash server-side
