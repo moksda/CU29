@@ -167,6 +167,16 @@ async function callAppsScript(params, method = 'POST') {
 // Routes
 // ════════════════════════════════════════════════════════════════
 
+// Temporary bcrypt smoke-test — remove after diagnosis
+app.get('/api/debug-bcrypt', async (req, res) => {
+  const pw = 'DebugPass1!';
+  const storedHash = '$2b$12$j3/fwRcuQZXaIcTdgjOUYuGOmAiYaP3G1PHXJ4EBByuYWoQTW.DHG';
+  const freshHash = await bcrypt.hash(pw, 4);
+  const matchFresh = await bcrypt.compare(pw, freshHash);
+  const matchStored = await bcrypt.compare(pw, storedHash);
+  res.json({ freshHash, matchFresh, matchStored, hashLen: storedHash.length });
+});
+
 // CSRF token — fetch this before submitting any form.
 // Writing to req.session forces express-session (saveUninitialized:false)
 // to persist the session and set cu29.sid so the session ID is stable
