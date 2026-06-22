@@ -50,6 +50,9 @@ function doPost(e) {
     if (p.action === 'set_approved') {
       return ContentService.createTextOutput(JSON.stringify(setApproved(p.email, p.status))).setMimeType(ContentService.MimeType.JSON);
     }
+    if (p.action === 'delete_user') {
+      return ContentService.createTextOutput(JSON.stringify(deleteUser(p.email))).setMimeType(ContentService.MimeType.JSON);
+    }
     return ContentService.createTextOutput(JSON.stringify({ success: false, error: 'unknown action' })).setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({ success: false, error: err.toString() })).setMimeType(ContentService.MimeType.JSON);
@@ -238,6 +241,19 @@ function getAdminContacts() {
     });
   }
   return { success: true, contacts: contacts };
+}
+
+function deleteUser(email) {
+  email = email.trim().toLowerCase();
+  var sheet = getAccountsSheet();
+  var rows = sheet.getDataRange().getValues();
+  for (var i = rows.length - 1; i >= 1; i--) {
+    if (String(rows[i][1] || '').trim().toLowerCase() === email) {
+      sheet.deleteRow(i + 1);
+      return { success: true };
+    }
+  }
+  return { success: false, error: 'User not found' };
 }
 
 function setApproved(email, status) {
