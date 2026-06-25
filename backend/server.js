@@ -604,6 +604,61 @@ app.post('/api/claude-proxy', async (req, res) => {
   }
 });
 
+// ── Transfer notification ─────────────────────────────────────────
+// Investor submits details of a bank transfer they have sent.
+// Routed through Apps Script to notify the admin — no third-party fees.
+const transferLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  message: { success: false, error: 'Too many submissions. Try again later.' }
+});
+
+app.post('/api/payment/notify',
+  transferLimiter,
+  csrfProtection,
+  [
+    body('amount')
+      .isFloat({ min: 1 })
+      .withMessage('Valid amount required'),
+    body('currency')
+      .isIn(['USD', 'EUR', 'GBP'])
+      .withMessage('Select a currency'),
+    body('method')
+      .isIn(['bank_wire', 'bank_transfer', 'sepa', 'ach', 'crypto'])
+      .withMessage('Select a payment method'),
+    body('reference')
+      .trim()
+      .isLength({ min: 1, max: 120 })
+      .escape()
+      .withMessage('Transfer reference is required'),
+    body('notes')
+      .optional({ checkFalsy: true })
+      .trim()
+      .isLength({ max: 500 })
+      .escape()
+  ],
+  async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    if (failValidation(req, res)) return;
+    try {
+      const { amount, currency, method, reference, notes } = req.body;
+      await callAppsScript({
+        action:    'contact',
+        name:      req.session.user.name,
+        email:     req.session.user.email,
+        phone:     '',
+        subject:   `Transfer Notification — ${currency} ${parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+        message:   `Investor: ${req.session.user.name} (${req.session.user.email})\nAmount: ${currency} ${amount}\nMethod: ${method}\nReference: ${reference}\nNotes: ${notes || 'N/A'}`,
+        department:'General Inquiries'
+      });
+      res.json({ success: true });
+    } catch (err) {
+      console.error('[payment/notify]', err.message);
+      res.status(500).json({ success: false, error: 'Could not submit notification' });
+    }
+  }
+);
+
 // ── Serve static HTML files ───────────────────────────────────────
 const path = require('path');
 
