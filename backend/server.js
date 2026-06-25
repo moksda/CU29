@@ -145,19 +145,29 @@ async function callAppsScript(params, method = 'POST') {
       const qs = new URLSearchParams(params).toString();
       res = await fetch(`${base}?${qs}`, { redirect: 'follow' });
       text = await res.text();
-      return JSON.parse(text);
+    } else {
+      res = await fetch(base, {
+        redirect: 'follow',
+        method: 'POST',
+        body: new URLSearchParams(params),
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+      });
+      text = await res.text();
     }
-    res = await fetch(base, {
-      redirect: 'follow',
-      method: 'POST',
-      body: new URLSearchParams(params),
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-    });
-    text = await res.text();
     console.log('[appsScript] ←', res.status, text.slice(0, 120));
+    if (res.status === 401 || res.status === 403) {
+      throw new Error('Google Apps Script access denied. Please re-deploy the script with "Anyone" access in the Google Apps Script editor.');
+    }
+    if (!res.ok) {
+      throw new Error(`Apps Script returned HTTP ${res.status}`);
+    }
     return JSON.parse(text);
   } catch (err) {
-    console.error('[appsScript] ERROR', res && res.status, text && text.slice(0, 120), err.message);
+    if (err instanceof SyntaxError) {
+      console.error('[appsScript] Non-JSON response', res && res.status, text && text.slice(0, 200));
+      throw new Error('Apps Script returned an unexpected response. Check the deployment URL and access settings.');
+    }
+    console.error('[appsScript] ERROR', res && res.status, err.message);
     throw err;
   }
 }
@@ -355,48 +365,6 @@ app.post('/api/admin/approve',
       res.json(data);
     } catch (e) {
       res.status(500).json({ error: e.message });
-    }
-  }
-);
-
-// ── Investor registration ─────────────────────────────────────────
-app.post('/api/apply',
-  applyLimiter,
-  csrfProtection,
-  [
-    body('first_name').trim().notEmpty().withMessage('First name is required'),
-    body('last_name').trim().notEmpty().withMessage('Last name is required'),
-    body('email').isEmail().normalizeEmail({ gmail_remove_dots: false, gmail_remove_subaddress: false }).withMessage('Valid email required'),
-    body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
-  ],
-  async (req, res) => {
-    if (failValidation(req, res)) return;
-    try {
-      const { first_name, last_name, email, password, ...rest } = req.body;
-      const hash = await bcrypt.hash(password, 12);
-      const data = await callAppsScript({
-        action: 'apply_investor',
-        first_name, last_name, email, password: hash,
-        dob:            rest.dob            || '',
-        nationality:    rest.nationality    || '',
-        country:        rest.country        || '',
-        phone:          rest.phone          || '',
-        investor_type:  rest.investor_type  || '',
-        experience:     rest.experience     || '',
-        history:        rest.history        || '',
-        capital:        rest.capital        || '',
-        horizon:        rest.horizon        || '',
-        interests:      rest.interests      || '',
-        risk:           rest.risk           || '',
-        expected_return:rest.expected_return|| '',
-        source_of_funds:rest.source_of_funds|| '',
-        pep:            rest.pep            || 'no'
-      });
-      if (!data.success) return res.status(400).json({ success: false, error: data.error || 'Registration failed' });
-      res.json({ success: true });
-    } catch (e) {
-      console.error('[apply]', e.message);
-      res.status(500).json({ success: false, error: 'Server error' });
     }
   }
 );
