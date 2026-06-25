@@ -550,7 +550,7 @@ document.getElementById('notify-form').addEventListener('submit',function(e){
 
 <script>
 // ── CMS content ─────────────────────────────────────────────────────
-(function(){fetch('/api/content').then(function(r){return r.json();}).then(function(d){if(!d.content)return;Object.keys(d.content).forEach(function(k){document.querySelectorAll('[data-cms="'+k+'"]').forEach(function(el){el.textContent=d.content[k];});});}).catch(function(){});})();
+(function(){fetch('/api/content').then(function(r){return r.json();}).then(function(d){if(!d.content)return;Object.keys(d.content).forEach(function(k){document.querySelectorAll('[data-cms="'+k+'"]').forEach(function(el){if(d.content[k])el.textContent=d.content[k];});});}).catch(function(){});})();
 // ── Intersection observer ───────────────────────────────────────────
 if('IntersectionObserver' in window){
   var obs=new IntersectionObserver(function(entries){

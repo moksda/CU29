@@ -478,7 +478,7 @@ function cu29SignOut(){
   <p>© 2026 InvestCu29 · GMG08 Ltd · Company No. 09965839 · Registered in England &amp; Wales</p>
   <p>Conducting Wealth</p>
 </div><script>
-(function(){fetch('/api/content').then(function(r){return r.json();}).then(function(d){if(!d.content)return;Object.keys(d.content).forEach(function(k){document.querySelectorAll('[data-cms="'+k+'"]').forEach(function(el){el.textContent=d.content[k];});});}).catch(function(){});})();
+(function(){fetch('/api/content').then(function(r){return r.json();}).then(function(d){if(!d.content)return;Object.keys(d.content).forEach(function(k){document.querySelectorAll('[data-cms="'+k+'"]').forEach(function(el){if(d.content[k])el.textContent=d.content[k];});});}).catch(function(){});})();
 </script>
 <script>
 function doInvestorSubmit(){
