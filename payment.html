@@ -440,7 +440,7 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);
 // ── Auth check ──────────────────────────────────────────────────────
 (function(){
   var s={};
-  try{s=JSON.parse(sessionStorage.getItem('cu29_user')||'{}');}catch(e){}
+  try{s=JSON.parse(localStorage.getItem('cu29_session')||'{}');}catch(e){}
   var gate=document.getElementById('auth-gate');
   var panel=document.getElementById('notify-panel');
   var badge=document.getElementById('nav-user-badge');
