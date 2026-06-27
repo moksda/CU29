@@ -211,39 +211,34 @@ nav{animation:slideDown .7s ease both}
 .reveal-d2{transition-delay:.2s}
 </style>
 </head>
-<body><div id="preloader"><div id="preloader-c"><span id="preloader-n">0</span><span id="preloader-pct">%</span></div></div><style>#preloader{position:fixed;inset:0;background:#01464a;z-index:9999;overflow:hidden;opacity:0}#preloader-c{font-family:'Bebas Neue',sans-serif;font-size:clamp(4rem,14vw,12rem);color:#EAE0D4;line-height:1;letter-spacing:.04em;position:absolute;opacity:0;white-space:nowrap}#preloader-pct{font-size:.45em;color:#C8793A;vertical-align:super;margin-left:.04em}</style><script>
+<body><div id="preloader"><div id="preloader-c"><span id="preloader-n">0</span><span id="preloader-pct">%</span></div></div><style>#preloader{position:fixed;inset:0;background:#01464a;z-index:9999;display:flex;align-items:center;justify-content:center}#preloader-c{font-family:'Bebas Neue',sans-serif;font-size:clamp(3rem,10vw,9rem);color:#EAE0D4;line-height:1;letter-spacing:.06em;opacity:0;transform:translateY(24px)}#preloader-pct{font-size:.42em;color:#C8793A;vertical-align:super;margin-left:.04em}</style><script>
 (function(){
   var ov=document.getElementById('preloader'),ct=document.getElementById('preloader-c'),nm=document.getElementById('preloader-n');
   if(!ov||!ct||!nm)return;
-  var W=window.innerWidth,H=window.innerHeight,dur=950,start=null,done=false;
+  var dur=800,start=null,done=false;
   var bail=setTimeout(function(){ov.style.display='none';},5000);
-  function ease(t){return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;}
+  function ease(t){return 1-Math.pow(1-t,3);}
   function frame(ts){
     if(done)return;
     if(!start)start=ts;
     var t=Math.min((ts-start)/dur,1),e=ease(t);
-    /* strict diagonal: bottom-left → top-right, no curve */
-    var x=W*.04+e*(W*.78);
-    var y=H*.75-e*(H*.62);
-    ct.style.left=x+'px';
-    ct.style.top=y+'px';
-    ct.style.opacity=1;
-    ov.style.opacity=e;       /* overlay fades in with the counter */
+    ct.style.opacity=e;
+    ct.style.transform='translateY('+(24*(1-e))+'px)';
     nm.textContent=Math.round(e*100);
     if(t<1){requestAnimationFrame(frame);return;}
     done=true;clearTimeout(bail);
     nm.textContent='100';
-    /* spring pop at 100 via CSS cubic-bezier overshoot */
-    ct.style.transition='transform .4s cubic-bezier(.34,1.56,.64,1)';
-    ct.style.transform='scale(1.3)';
+    ct.style.transition='transform .35s cubic-bezier(.34,1.56,.64,1)';
+    ct.style.transform='scale(1.08)';
     setTimeout(function(){
+      ct.style.transition='transform .25s ease';
       ct.style.transform='scale(1)';
       setTimeout(function(){
-        ov.style.transition='opacity .45s ease';
+        ov.style.transition='opacity .5s ease';
         ov.style.opacity='0';
-        setTimeout(function(){ov.style.display='none';},480);
-      },320);
-    },380);
+        setTimeout(function(){ov.style.display='none';},520);
+      },280);
+    },350);
   }
   requestAnimationFrame(frame);
 })();
