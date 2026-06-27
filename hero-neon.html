@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
@@ -263,7 +263,7 @@ footer span{font-size:.65rem;letter-spacing:.1em;color:rgba(255,255,255,.18)}
 }
 </style>
 </head>
-<body>
+<body><div id="preloader"><div id="preloader-c"><span id="preloader-n">0</span><span id="preloader-pct">%</span></div></div><style>#preloader{position:fixed;inset:0;background:#01464a;z-index:9999;display:flex;align-items:center;justify-content:center;transition:opacity .65s ease,visibility .65s ease}#preloader.out{opacity:0;visibility:hidden;pointer-events:none}#preloader-c{font-family:'Bebas Neue',sans-serif;font-size:clamp(5rem,18vw,14rem);color:#EAE0D4;line-height:1;letter-spacing:.04em}#preloader-pct{font-size:.48em;color:#C8793A;vertical-align:super;margin-left:.05em}</style><script>(function(){var e=document.getElementById('preloader'),n=document.getElementById('preloader-n'),p=0,ld=false;function s(){if(p<90){p++;n.textContent=p;setTimeout(s,8+Math.round(p/4));}else if(ld){f();}else{setTimeout(s,50);}}function f(){if(p<100){p++;n.textContent=p;setTimeout(f,15);}else{e.classList.add('out');setTimeout(function(){e.style.display='none';},700);}}window.addEventListener('load',function(){ld=true;});s();})();</script>
 
 <!-- FIXED card background -->
 <div id="cards-bg"><div id="planes-wrap"></div></div>
