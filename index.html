@@ -211,7 +211,45 @@ nav{animation:slideDown .7s ease both}
 .reveal-d2{transition-delay:.2s}
 </style>
 </head>
-<body><div id="preloader"><div id="preloader-c"><span id="preloader-n">0</span><span id="preloader-pct">%</span></div></div><style>#preloader{position:fixed;inset:0;background:#01464a;z-index:9999;display:flex;align-items:center;justify-content:center}#preloader-c{font-family:'Bebas Neue',sans-serif;font-size:clamp(5rem,18vw,14rem);color:#EAE0D4;line-height:1;letter-spacing:.04em;opacity:0}#preloader-pct{font-size:.48em;color:#C8793A;vertical-align:super;margin-left:.05em}</style><script type="module">import{animate,spring}from'https://cdn.jsdelivr.net/npm/animejs@4/+esm';const ov=document.getElementById('preloader'),ct=document.getElementById('preloader-c'),nm=document.getElementById('preloader-n');const proxy={value:0};animate(proxy,{value:100,ease:spring({bounce:0.4,duration:900}),onUpdate(){const v=Math.max(0,Math.min(100,proxy.value));nm.textContent=Math.round(v);ct.style.opacity=v/100;},onComplete(){const fadeOut=()=>{animate(ov,{opacity:0,duration:600,ease:'outQuart',onComplete(){ov.style.display='none';}});};if(document.readyState==='complete')fadeOut();else window.addEventListener('load',fadeOut);}});</script>
+<body><div id="preloader"><div id="preloader-c"><span id="preloader-n">0</span><span id="preloader-pct">%</span></div></div><style>#preloader{position:fixed;inset:0;background:#01464a;z-index:9999;display:flex;align-items:center;justify-content:center}#preloader-c{font-family:'Bebas Neue',sans-serif;font-size:clamp(5rem,18vw,14rem);color:#EAE0D4;line-height:1;letter-spacing:.04em;opacity:0}#preloader-pct{font-size:.48em;color:#C8793A;vertical-align:super;margin-left:.05em}</style><script type="module">
+import { animate, spring } from 'https://cdn.jsdelivr.net/npm/animejs@4/+esm';
+
+const ov = document.getElementById('preloader');
+const ct = document.getElementById('preloader-c');
+const nm = document.getElementById('preloader-n');
+
+// Phase 1: count 0 → 100, number fades in as it climbs
+const counter = { n: 0 };
+animate(counter, {
+  n: 100,
+  duration: 700,
+  ease: 'outExpo',
+  onUpdate() {
+    nm.textContent = Math.round(counter.n);
+    ct.style.opacity = counter.n / 100;
+  },
+  onComplete() {
+    nm.textContent = '100';
+    ct.style.opacity = 1;
+
+    // Phase 2: spring bounce on the 100 — exact code you showed
+    animate(ct, {
+      scale: 1.25,
+      ease: spring({ bounce: 0.5, duration: 10 }),
+      onComplete() {
+        // Phase 3: fade out overlay
+        const go = () => animate(ov, {
+          opacity: 0,
+          duration: 500,
+          ease: 'outQuart',
+          onComplete() { ov.style.display = 'none'; }
+        });
+        document.readyState === 'complete' ? go() : window.addEventListener('load', go);
+      }
+    });
+  }
+});
+</script>
 
 <nav>
   <a href="index.html" class="nav-logo">
