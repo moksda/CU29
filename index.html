@@ -211,33 +211,30 @@ nav{animation:slideDown .7s ease both}
 .reveal-d2{transition-delay:.2s}
 </style>
 </head>
-<body><div id="preloader"><div id="preloader-c"><span id="preloader-n">0</span><span id="preloader-pct">%</span></div></div><style>#preloader{position:fixed;inset:0;background:#01464a;z-index:9999;display:flex;align-items:center;justify-content:center}#preloader-c{font-family:'Bebas Neue',sans-serif;font-size:clamp(5rem,18vw,14rem);color:#EAE0D4;line-height:1;letter-spacing:.04em;opacity:0}#preloader-pct{font-size:.48em;color:#C8793A;vertical-align:super;margin-left:.05em}</style><script type="module">
-import { animate, spring } from 'https://cdn.jsdelivr.net/npm/animejs@4/+esm';
+<body><div id="preloader"><div id="preloader-c"><span id="preloader-n">0</span><span id="preloader-pct">%</span></div></div><style>#preloader{position:fixed;inset:0;background:#01464a;z-index:9999;display:flex;align-items:center;overflow:hidden;container-type:inline-size}#preloader-c{font-family:'Bebas Neue',sans-serif;font-size:clamp(5rem,18vw,14rem);color:#EAE0D4;line-height:1;letter-spacing:.04em;opacity:0;position:absolute;left:2vw}#preloader-pct{font-size:.48em;color:#C8793A;vertical-align:super;margin-left:.05em}</style><script type="module">
+import { animate, spring } from 'https://cdn.jsdelivr.net/npm/animejs@4.0.2/+esm';
 
 const ov = document.getElementById('preloader');
 const ct = document.getElementById('preloader-c');
 const nm = document.getElementById('preloader-n');
 
-// Phase 1: count 0 → 100, number fades in as it climbs
+// Fade number in immediately
+animate(ct, { opacity: 1, duration: 300, ease: 'outQuart' });
+
+// Slide number across screen + counter — both use same inOut(8.03) easing in sync
 const counter = { n: 0 };
-animate(counter, {
-  n: 100,
-  duration: 700,
-  ease: 'outExpo',
-  onUpdate() {
-    nm.textContent = Math.round(counter.n);
-    ct.style.opacity = counter.n / 100;
-  },
+
+animate(ct, {
+  x: '82cqw',
+  duration: 1200,
+  ease: 'inOut(8.03)',
   onComplete() {
     nm.textContent = '100';
-    ct.style.opacity = 1;
-
-    // Phase 2: spring bounce on the 100 — exact code you showed
+    // Spring bounce at 100% — your exact code
     animate(ct, {
       scale: 1.25,
       ease: spring({ bounce: 0.5, duration: 10 }),
       onComplete() {
-        // Phase 3: fade out overlay
         const go = () => animate(ov, {
           opacity: 0,
           duration: 500,
@@ -248,6 +245,13 @@ animate(counter, {
       }
     });
   }
+});
+
+animate(counter, {
+  n: 100,
+  duration: 1200,
+  ease: 'inOut(8.03)',
+  onUpdate() { nm.textContent = Math.round(counter.n); }
 });
 </script>
 
