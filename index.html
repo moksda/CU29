@@ -211,7 +211,7 @@ nav{animation:slideDown .7s ease both}
 .reveal-d2{transition-delay:.2s}
 </style>
 </head>
-<body><div id="preloader"><div id="preloader-c"><span id="preloader-n">0</span><span id="preloader-pct">%</span></div></div><style>#preloader{position:fixed;inset:0;background:#01464a;z-index:9999;overflow:hidden}#preloader-c{font-family:'Bebas Neue',sans-serif;font-size:clamp(4rem,14vw,12rem);color:#EAE0D4;line-height:1;letter-spacing:.04em;position:absolute;opacity:0;white-space:nowrap}#preloader-pct{font-size:.45em;color:#C8793A;vertical-align:super;margin-left:.04em}</style><script>
+<body><div id="preloader"><div id="preloader-c"><span id="preloader-n">0</span><span id="preloader-pct">%</span></div></div><style>#preloader{position:fixed;inset:0;background:#01464a;z-index:9999;overflow:hidden;opacity:0}#preloader-c{font-family:'Bebas Neue',sans-serif;font-size:clamp(4rem,14vw,12rem);color:#EAE0D4;line-height:1;letter-spacing:.04em;position:absolute;opacity:0;white-space:nowrap}#preloader-pct{font-size:.45em;color:#C8793A;vertical-align:super;margin-left:.04em}</style><script>
 (function(){
   var ov=document.getElementById('preloader'),ct=document.getElementById('preloader-c'),nm=document.getElementById('preloader-n');
   if(!ov||!ct||!nm)return;
@@ -222,12 +222,13 @@ nav{animation:slideDown .7s ease both}
     if(done)return;
     if(!start)start=ts;
     var t=Math.min((ts-start)/dur,1),e=ease(t);
-    /* sweep: bottom-left → arc up → top-right */
+    /* strict diagonal: bottom-left → top-right, no curve */
     var x=W*.04+e*(W*.78);
-    var y=H*.72-e*(H*.58)-Math.sin(e*Math.PI)*(H*.18);
+    var y=H*.75-e*(H*.62);
     ct.style.left=x+'px';
     ct.style.top=y+'px';
-    ct.style.opacity=Math.min(t*10,1);
+    ct.style.opacity=1;
+    ov.style.opacity=e;       /* overlay fades in with the counter */
     nm.textContent=Math.round(e*100);
     if(t<1){requestAnimationFrame(frame);return;}
     done=true;clearTimeout(bail);
